@@ -196,7 +196,7 @@ class PITCP(BaseEstimator, nn.Module):
                 loss.backward()
                 self.optimizer.step()
 
-                batch_size = xb.shape[0]
+                batch_size = xb.size(0)
                 epoch_loss += loss.item() * batch_size
                 n_seen += batch_size
 
