@@ -16,23 +16,55 @@ from torch.distributions import Normal
 from tqdm import trange
 from zuko.lazy import LazyDistribution  # type: ignore
 
-from ._defs import CPResult
 from ._utils import is_flow, is_mixture
 
 
 class PITCP(BaseEstimator, nn.Module):
     """PIT conformal predictor using a normalizing flow or mixture density estimator.
 
+    This class implements probability integral transform (PIT) conformal prediction.
+    Given a black-box base nonconformity score function, it fits a conditional density
+    estimator on the score distribution over a training set, then uses the learned
+    conditional CDF to map raw scores to PIT values. Conformal coverage guarantees are
+    obtained by comparing test PIT values against a calibration quantile.
+
+    The estimator must be a `zuko` lazy distribution from either `zuko.flows` (a
+    normalizing flow) or `zuko.mixtures` (a mixture density network). The class
+    internally detects which family is used and applies the appropriate CDF computation.
+
+    Base score settings:
+        - `base_score`: A callable `(X, y) -> s` computing a nonconformity score for
+          each sample. Must return a **column vector** of shape `(n, 1)` so that scores
+          are compatible with the conditional density estimator input.
+
+    Density estimation settings:
+        - `estimator`: A `zuko` lazy distribution instance conditioned on features, used
+          to model the score distribution. Must be from `zuko.flows` or `zuko.mixtures`.
+        - `optimizer`: Optimizer used to train the density estimator via maximum
+          likelihood (negative log-likelihood/forward KL divergence minimization).
+
+    Training settings:
+        - `n_epochs`: Number of full passes over the training data.
+        - `batch_size`: Mini-batch size used during both training and inference.
+        - `verbose`: Whether to display a `tqdm` progress bar during `fit`.
+
     Attributes:
-        estimator (LazyDistribution): Conditional density estimator.
+        base_score (Callable[[torch.Tensor, torch.Tensor], torch.Tensor]): Function
+            computing nonconformity scores from features and labels. Must return a
+            column vector of shape `(n, 1)`.
+        estimator (LazyDistribution): Conditional density estimator from
+            `zuko.flows` or `zuko.mixtures`.
         optimizer (torch.optim.Optimizer): Optimizer for training the estimator.
         n_epochs (int): Number of training epochs.
         batch_size (int): Batch size for data loading.
         verbose (bool | int): Whether to display a progress bar during training.
-        estimator_type_ (str): Either ``"flow"`` or ``"mixture"``.
-        scores_ (torch.Tensor): Calibration PIT scores stored after conformalization.
+        estimator_type_ (str): Either `"flow"` or `"mixture"`, set at
+            initialization based on the type of `estimator`.
+        scores_ (torch.Tensor): Calibration PIT scores of shape `(n_cal, 1)`,
+            stored after calling `conformalize`.
     """
 
+    base_score: Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
     estimator: LazyDistribution
     optimizer: torch.optim.Optimizer
     n_epochs: int
@@ -103,7 +135,7 @@ class PITCP(BaseEstimator, nn.Module):
             y (np.typing.ArrayLike): Target labels.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Feature and flattened score tensors.
+            tuple[torch.Tensor, torch.Tensor]: Feature and score tensors.
         """
         assert_all_finite(X, input_name="X")
         assert_all_finite(y, input_name="y")
@@ -119,10 +151,10 @@ class PITCP(BaseEstimator, nn.Module):
             shuffle=False,
         )
 
-        return X, torch.cat([self.base_score(xb, yb).flatten() for xb, yb in loader])
+        return X, torch.cat([self.base_score(xb, yb) for xb, yb in loader])
 
     @torch.no_grad()
-    def transform(self, x: torch.Tensor, s: torch.Tensor):
+    def _correct(self, x: torch.Tensor, s: torch.Tensor):
         """Maps nonconformity scores to PIT values via the learned conditional CDF.
 
         Args:
@@ -133,20 +165,20 @@ class PITCP(BaseEstimator, nn.Module):
             torch.Tensor: PIT-corrected non-conformity scores.
         """
 
-        def _transform_flow(x: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
+        def _correct_flow(x: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
             dist = self.estimator(x)
-            return dist.transform(s).flatten()
+            return dist.transform(s)
 
-        def _transform_mixture(x: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
+        def _correct_mixture(x: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
             dist = self.estimator(x)
-            weights = dist.logits.softmax(dim=-1).reshape(-1, 1)
-            means = dist.base.loc.reshape(-1, 1)
-            stds = dist.base.covariance_matrix.reshape(-1, 1).sqrt()
-            return (weights * Normal(means, stds).cdf(s)).sum(dim=-2)
+            weights = dist.logits.softmax(dim=-1)
+            means = dist.base.loc.squeeze(-1)
+            stds = dist.base.covariance_matrix.squeeze((-2, -1)).sqrt()
+            return (weights * Normal(means, stds).cdf(s)).sum(dim=-1, keepdim=True)
 
         if self.estimator_type_ == "flow":
-            return _transform_flow(x, s)
-        return _transform_mixture(x, s)
+            return _correct_flow(x, s)
+        return _correct_mixture(x, s)
 
     @validate_params(
         {
@@ -165,12 +197,9 @@ class PITCP(BaseEstimator, nn.Module):
         Returns:
             PITCP: The fitted estimator.
         """
-        dtype = next(self.parameters()).dtype
         device = next(self.parameters()).device
 
         X, s = self._compute_base_scores(X, y)
-        X = X.to(dtype=dtype, device=device)  # type: ignore
-        s = s.to(dtype=dtype, device=device)
 
         dataset = torch.utils.data.TensorDataset(X, s)
         loader = torch.utils.data.DataLoader(
@@ -181,29 +210,24 @@ class PITCP(BaseEstimator, nn.Module):
 
         self.train()
 
-        pbar = trange(self.n_epochs, disable=not self.verbose)
-
-        for epoch in pbar:
+        pbar = trange(self.n_epochs, disable=not self.verbose, unit="epoch")
+        for _ in pbar:
             epoch_loss = 0.0
-            n_seen = 0
 
             for xb, sb in loader:
                 self.optimizer.zero_grad()
 
-                dist = self.estimator(xb)
-                loss = -dist.log_prob(sb).mean()
+                dist = self.estimator(xb.to(device))
+                loss = -dist.log_prob(sb.to(device)).mean()
 
                 loss.backward()
                 self.optimizer.step()
 
                 batch_size = xb.size(0)
                 epoch_loss += loss.item() * batch_size
-                n_seen += batch_size
 
-            epoch_loss /= n_seen
-
-            if self.verbose:
-                pbar.set_description(f"Epoch: {epoch}, NLL: {epoch_loss:.4f}")
+            epoch_loss /= len(loader.dataset)
+            pbar.set_postfix({"NLL": f"{epoch_loss:.4f}"})
 
         return self
 
@@ -222,14 +246,11 @@ class PITCP(BaseEstimator, nn.Module):
             y (np.typing.ArrayLike): Calibration labels.
 
         Returns:
-            PITCP: The updated estimator.
+            Self: The updated estimator.
         """
-        dtype = next(self.parameters()).dtype
         device = next(self.parameters()).device
 
         X, s = self._compute_base_scores(X, y)
-        X = X.to(dtype=dtype, device=device)  # type: ignore
-        s = s.to(dtype=dtype, device=device)
 
         dataset = torch.utils.data.TensorDataset(X, s)
         loader = torch.utils.data.DataLoader(
@@ -240,7 +261,9 @@ class PITCP(BaseEstimator, nn.Module):
 
         self.eval()
 
-        self.scores_ = torch.cat([self.transform(xb, sb) for xb, sb in loader])
+        self.scores_ = torch.cat(
+            [self._correct(xb.to(device), sb.to(device)) for xb, sb in loader]
+        )
 
         return self
 
@@ -258,7 +281,7 @@ class PITCP(BaseEstimator, nn.Module):
         y: np.typing.ArrayLike,
         *,
         quantile: float = 0.9,
-    ) -> CPResult:
+    ) -> torch.Tensor:
         """Predicts conformal coverage for test points.
 
         Args:
@@ -267,7 +290,7 @@ class PITCP(BaseEstimator, nn.Module):
             quantile (float, optional): Target coverage level. Defaults to 0.9.
 
         Returns:
-            CPResult: Coverage indicators and conformal quantile.
+            torch.Tensor: Coverage indicators.
         """
         check_is_fitted(self, "scores_")
 
@@ -287,6 +310,6 @@ class PITCP(BaseEstimator, nn.Module):
 
         self.eval()
 
-        u = self.transform(X, s)
+        u = self._correct(X, s)
 
-        return CPResult(is_covered=u <= q, quantile=q)
+        return u.le(q)
