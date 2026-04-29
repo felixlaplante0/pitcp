@@ -5,7 +5,7 @@ readme = "README.md"
 urls = { "Source" = "https://github.com/felixlaplante0/pitcp" }
 authors = [{ name = "Félix Laplante" }]
 requires-python = ">=3.10"
-dependencies = ["torch", "zuko", "scikit-learn"]
+dependencies = ["numpy", "torch", "scikit-learn", "zuko", "tqdm"]
 dynamic = ["version"]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -19,7 +19,7 @@ requires = ["setuptools>=42", "setuptools-scm[toml]>=6.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["sbcluster"]
+packages = ["pitcp"]
 
 [tool.setuptools_scm]
 version_scheme = "post-release"
