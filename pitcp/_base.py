@@ -123,7 +123,7 @@ class PITCP(BaseEstimator, nn.Module):
                 "Estimator must be either a `zuko.flows` or `zuko.mixtures` submodule"
             )
 
-    def _compute_base_scores(
+    def _get_X_s(
         self,
         X: np.typing.ArrayLike,
         y: np.typing.ArrayLike,
@@ -141,7 +141,7 @@ class PITCP(BaseEstimator, nn.Module):
         assert_all_finite(y, input_name="y")
         check_consistent_length(X, y)
 
-        X = torch.as_tensor(X)
+        X = torch.as_tensor(X)  # type: ignore
         y = torch.as_tensor(y)
 
         dataset = torch.utils.data.TensorDataset(X, y)
@@ -151,10 +151,12 @@ class PITCP(BaseEstimator, nn.Module):
             shuffle=False,
         )
 
-        return X, torch.cat([self.base_score(xb, yb) for xb, yb in loader])
+        return X, torch.cat(
+            [self.base_score(xb, yb).detach().cpu() for xb, yb in loader]
+        )
 
     @torch.no_grad()
-    def _correct(self, x: torch.Tensor, s: torch.Tensor):
+    def _correct(self, X: torch.Tensor, s: torch.Tensor):
         """Maps nonconformity scores to PIT values via the learned conditional CDF.
 
         Args:
@@ -176,9 +178,20 @@ class PITCP(BaseEstimator, nn.Module):
             stds = dist.base.covariance_matrix.squeeze((-2, -1)).sqrt()
             return (weights * Normal(means, stds).cdf(s)).sum(dim=-1, keepdim=True)
 
-        if self.estimator_type_ == "flow":
-            return _correct_flow(x, s)
-        return _correct_mixture(x, s)
+        _correct = _correct_flow if self.estimator_type_ == "flow" else _correct_mixture
+
+        device = next(self.parameters()).device
+
+        dataset = torch.utils.data.TensorDataset(X, s)
+        loader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+        )
+
+        return torch.cat(
+            [_correct(xb.to(device), sb.to(device)).detach().cpu() for xb, sb in loader]
+        )
 
     @validate_params(
         {
@@ -195,11 +208,11 @@ class PITCP(BaseEstimator, nn.Module):
             y (np.typing.ArrayLike): Target labels.
 
         Returns:
-            PITCP: The fitted estimator.
+            Self: The fitted estimator.
         """
         device = next(self.parameters()).device
 
-        X, s = self._compute_base_scores(X, y)
+        X, s = self._get_X_s(X, y)  # type: ignore
 
         dataset = torch.utils.data.TensorDataset(X, s)
         loader = torch.utils.data.DataLoader(
@@ -248,22 +261,11 @@ class PITCP(BaseEstimator, nn.Module):
         Returns:
             Self: The updated estimator.
         """
-        device = next(self.parameters()).device
-
-        X, s = self._compute_base_scores(X, y)
-
-        dataset = torch.utils.data.TensorDataset(X, s)
-        loader = torch.utils.data.DataLoader(
-            dataset,
-            batch_size=self.batch_size,
-            shuffle=True,
-        )
+        X, s = self._get_X_s(X, y)  # type: ignore
 
         self.eval()
 
-        self.scores_ = torch.cat(
-            [self._correct(xb.to(device), sb.to(device)) for xb, sb in loader]
-        )
+        self.scores_ = self._correct(X, s)
 
         return self
 
@@ -271,7 +273,7 @@ class PITCP(BaseEstimator, nn.Module):
         {
             "X": ["array-like"],
             "y": ["array-like"],
-            "quantile": [float],
+            "quantile": [float, torch.Tensor],
         },
         prefer_skip_nested_validation=True,
     )
@@ -280,36 +282,31 @@ class PITCP(BaseEstimator, nn.Module):
         X: np.typing.ArrayLike,
         y: np.typing.ArrayLike,
         *,
-        quantile: float = 0.9,
+        quantile: float | torch.Tensor = 0.9,
     ) -> torch.Tensor:
         """Predicts conformal coverage for test points.
 
         Args:
             X (np.typing.ArrayLike): Test features.
             y (np.typing.ArrayLike): Test labels.
-            quantile (float, optional): Target coverage level. Defaults to 0.9.
+            quantile (float | torch.Tensor, optional): Target coverage level. Defaults
+                to 0.9.
 
         Returns:
             torch.Tensor: Coverage indicators.
         """
         check_is_fitted(self, "scores_")
 
-        dtype = next(self.parameters()).dtype
-        device = next(self.parameters()).device
-
         n = self.scores_.numel()
-        quantile = min(quantile * (1 + 1 / (n + 1)), 1)
-        if quantile < n / (n + 1):
-            q = torch.quantile(self.scores_, quantile).item()
-        else:
-            q = float("inf")
+        quantile = (torch.as_tensor(quantile) * (1 + 1 / (n + 1))).clamp(max=1.0)
+        threshold = torch.quantile(self.scores_, quantile)
 
-        X, s = self._compute_base_scores(X, y)
-        X = X.to(dtype=dtype, device=device)  # type: ignore
-        s = s.to(dtype=dtype, device=device)
+        X, s = self._get_X_s(X, y)  # type: ignore
 
         self.eval()
 
         u = self._correct(X, s)
+        covered = u.le(threshold)
+        covered[quantile > n / (n + 1)] = True
 
-        return u.le(q)
+        return covered
