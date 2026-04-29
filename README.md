@@ -65,12 +65,6 @@ covered = pitcp.predict(X_test, y_test, quantile=0.9)
 print(f"Empirical coverage: {covered.float().mean():.3f}")
 ```
 
-## Results
-
-<p align="center">
-  <img src="./figures/quantile-0.75.pdf" alt="PIT-CP Comparison" width="80%">
-</p>
-
 ---
 
 ## 📖 Learn More
