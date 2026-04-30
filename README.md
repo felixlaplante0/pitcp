@@ -7,7 +7,7 @@
 ## ✨ Features
 
 - **PIT Conformal Prediction**: Maps base nonconformity scores through a learned conditional CDF, producing asymptotically exact conditional coverage.
-- **Model-agnostic**: Works with any callable nonconformity score `s(X, y)`, including distance-, residual-, or likelihood-based scores.
+- **Model-agnostic**: Works with any callable nonconformity score `s(x, y)`, including distance, residual, or likelihood-based scores.
 - **Flexible Density Estimation**: Supports normalizing flows and mixture density networks from the [zuko](https://github.com/probabilists/zuko) library.
 - **Marginal Coverage Guarantee**: Provably valid conformal coverage at any target level via finite-sample calibration.
 - **scikit-learn**: Native `BaseEstimator` integration with a familiar `fit` / `predict` API.
