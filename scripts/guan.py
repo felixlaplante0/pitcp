@@ -5,6 +5,7 @@ from scipy.stats import norm
 
 from pitcp import PITCP
 
+
 def std(x):
     return torch.where((x > -0.9) & (x < 0.9), torch.cos(torch.pi * x / 2), 1.0)
 
@@ -53,24 +54,16 @@ def run(score, name, q):
     xb, yb = X_test.flatten(), y_test.flatten()
 
     xv = torch.linspace(-1, 1, 500)
-    yv = torch.linspace(yb.min(), yb.max(), 500)
+    yv = torch.linspace(yb.min(), yb.max(), 1000)
     xg, yg = torch.meshgrid(
         xv,
         yv,
         indexing="ij",
     )
 
-    Xg, Yg = xg.reshape(-1, 1), yg.reshape(-1, 1)
-    Zb = score(Xg, Yg).flatten().le(t).reshape(xg.shape).float()
-    Zp = (
-        pitcp.predict(
-            Xg,
-            Yg,
-            quantile=q,
-        )
-        .reshape(xg.shape)
-        .float()
-    )
+    Xg, Yg = xg.unsqueeze(-1), yg.unsqueeze(-1)
+    Zb = score(Xg, Yg).squeeze(-1).le(t).float()
+    Zp = pitcp.predict(Xg, Yg, quantile=q).squeeze(-1).float()
 
     Cb = score(X_test, y_test).flatten().le(t)
     Cp = pitcp.predict(
@@ -94,7 +87,7 @@ def run(score, name, q):
         ax[0, i].contour(xg, yg, Z, levels=[0.5], colors="#5fb482")
         ax[0, i].scatter(xb[C], yb[C], c="#5fb482", s=3)
         ax[0, i].scatter(xb[~C], yb[~C], c="#dc699b", s=3)
-        ax[0, i].set_title(f"{T} Conformal region")
+        ax[0, i].set_title(f"{T} conformal region")
         ax[0, i].set_xlabel("X")
         ax[0, i].set_ylabel("Y")
 
@@ -113,11 +106,18 @@ def run(score, name, q):
 
         s = std(xv)
 
+        marginal_coverage = torch.mean(C.float()).item()
         coverage = norm.cdf((ymax / s).numpy()) - norm.cdf((ymin / s).numpy())
         l1 = torch.nanmean(torch.abs(torch.tensor(coverage) - q)).item()
 
         ax[1, i].plot(xv, coverage, linewidth=2, c="#7db9f5")
-        ax[1, i].axhline(q, c="red", linestyle="dashed", label=f"Target coverage {q}")
+        ax[1, i].axhline(q, c="red", linestyle="dashed", label=f"Target coverage: {q}")
+        ax[1, i].axhline(
+            marginal_coverage,
+            c="blue",
+            linestyle="dashed",
+            label=f"Marginal coverage: {marginal_coverage:.3f}",
+        )
         ax[1, i].fill_between(
             xv,
             coverage,
@@ -127,14 +127,14 @@ def run(score, name, q):
             label=f"Mean absolute deviation: {l1:.3f}",
         )
 
-        ax[1, i].set_ylim(0, 1)
-        ax[1, i].set_title(f"{T} Conditional Coverage")
+        ax[1, i].set_ylim(0, 1.05)
+        ax[1, i].set_title(f"{T} conditional coverage")
         ax[1, i].set_xlabel("X")
         ax[1, i].set_ylabel("Coverage")
-        ax[1, i].legend()
+        ax[1, i].legend(loc="lower center")
 
     plt.tight_layout()
-    plt.savefig(f"./figures/quantile-{q}.pdf")
+    plt.savefig(f"../figures/quantile-{q}.pdf")
     plt.show()
 
 

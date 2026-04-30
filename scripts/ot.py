@@ -56,5 +56,5 @@ for a in ax:
     a.set_yticks([])
 
 plt.tight_layout()
-plt.savefig("ot.pdf")
+plt.savefig("../figures/ot.pdf")
 plt.show()

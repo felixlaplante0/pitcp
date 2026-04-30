@@ -274,6 +274,7 @@ class PITCP(BaseEstimator, nn.Module):
             "X": ["array-like"],
             "y": ["array-like"],
             "quantile": [float, torch.Tensor],
+            "return_threshold": [bool],
         },
         prefer_skip_nested_validation=True,
     )
@@ -298,8 +299,9 @@ class PITCP(BaseEstimator, nn.Module):
         check_is_fitted(self, "scores_")
 
         n = self.scores_.numel()
-        quantile = (torch.as_tensor(quantile) * (1 + 1 / (n + 1))).clamp(max=1.0)
-        threshold = torch.quantile(self.scores_, quantile)
+        k = torch.ceil(torch.as_tensor(quantile) * (n + 1))
+        level = (k / n).clamp(max=1.0)
+        threshold = torch.quantile(self.scores_, level)
 
         X, s = self._get_X_s(X, y)  # type: ignore
 
@@ -307,6 +309,6 @@ class PITCP(BaseEstimator, nn.Module):
 
         u = self._correct(X, s)
         covered = u.le(threshold)
-        covered[quantile > n / (n + 1)] = True
+        covered[k > n] = True
 
         return covered
