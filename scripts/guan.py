@@ -85,11 +85,12 @@ def run(score, name, q):
             xg, yg, Z, levels=[0, 0.5, 1], colors=["white", "#aae6be"], alpha=0.5
         )
         ax[0, i].contour(xg, yg, Z, levels=[0.5], colors="#5fb482")
-        ax[0, i].scatter(xb[C], yb[C], c="#5fb482", s=3)
-        ax[0, i].scatter(xb[~C], yb[~C], c="#dc699b", s=3)
+        ax[0, i].scatter(xb[C], yb[C], c="#5fb482", s=3, label="Covered")
+        ax[0, i].scatter(xb[~C], yb[~C], c="#dc6969", s=3, label="Uncovered")
         ax[0, i].set_title(f"{T} conformal region")
         ax[0, i].set_xlabel("X")
         ax[0, i].set_ylabel("Y")
+        ax[0, i].legend(loc="upper center", markerscale=4)
 
         M = Z.bool()
 

@@ -26,8 +26,8 @@ curves = [
     ),
     (
         lognorm(0.52, scale=np.exp(0.28)),
-        "#ffbed2",
-        "#dc699b",
+        "#ffbebe",
+        "#dc6969",
         r"$P_{S\mid X=b}$",
         (2.0, 0.35),
     ),
