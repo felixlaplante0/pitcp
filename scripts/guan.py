@@ -23,10 +23,9 @@ torch.manual_seed(42)
 
 
 def run(score, q):
-    model = zuko.flows.NSF(
+    model = zuko.flows.SOSPF(
         features=1,
         context=1,
-        bins=4,
         hidden_features=(32, 32, 32),
     )
 
