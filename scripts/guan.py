@@ -22,7 +22,7 @@ torch.manual_seed(42)
 ]
 
 
-def run(score, name, q):
+def run(score, q):
     model = zuko.flows.NSF(
         features=1,
         context=1,
@@ -72,8 +72,7 @@ def run(score, name, q):
         quantile=q,
     ).flatten()
 
-    fig, ax = plt.subplots(2, 2, figsize=(10, 8))
-    fig.suptitle(name)
+    _, ax = plt.subplots(2, 2, figsize=(10, 8))
 
     for i, (Z, C, T) in enumerate(
         [
@@ -82,7 +81,7 @@ def run(score, name, q):
         ]
     ):
         ax[0, i].contourf(
-            xg, yg, Z, levels=[0, 0.5, 1], colors=["white", "#aae6be"], alpha=0.5
+            xg, yg, Z, levels=[0, 0.5, 1], colors=["white", "#aae6be"], alpha=0.3
         )
         ax[0, i].contour(xg, yg, Z, levels=[0.5], colors="#5fb482")
         ax[0, i].scatter(xb[C], yb[C], c="#5fb482", s=3, label="Covered")
@@ -152,10 +151,10 @@ def score_y(x, y):
     return y
 
 
-for score, n, q in [
-    (score_abs, r"Score $s(x, y) = \vert y \vert$", 0.5),
-    (score_oracle, r"Score $s(x, y) = -\log p(y \mid x)$", 0.75),
-    (score_y, r"Score $s(x, y) = y$", 0.9),
+for score, q in [
+    (score_abs, 0.5),
+    (score_oracle, 0.75),
+    (score_y, 0.9),
 ]:
     with plt.rc_context(
         {
@@ -167,4 +166,4 @@ for score, n, q in [
             "legend.fontsize": 12,
         }
     ):
-        run(score, n, q)
+        run(score, q)
