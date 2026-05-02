@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import torch
 import zuko
 from scipy.stats import norm
-
 from pitcp import PITCP
 
 
@@ -23,117 +22,105 @@ torch.manual_seed(42)
 
 
 def run(score, q):
-    model = zuko.flows.SOSPF(
-        features=1,
-        context=1,
-        hidden_features=(32, 32, 32),
-    )
+    model = zuko.flows.SOSPF(features=1, context=1, hidden_features=(32, 32, 32))
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-    optimizer = torch.optim.Adam(
-        model.parameters(),
-        lr=1e-3,
-    )
-
-    pitcp = PITCP(
-        score,
-        model,
-        optimizer,
-        n_epochs=100,
-        batch_size=64,
-    )
-
+    pitcp = PITCP(score, model, optimizer, n_epochs=100, batch_size=64)
     pitcp.fit(X_train, y_train)
     pitcp.conformalize(X_cal, y_cal)
 
-    t = torch.quantile(
-        score(X_cal, y_cal).flatten(),
-        q,
-    ).item()
+    t = torch.quantile(score(X_cal, y_cal).flatten(), q).item()
 
     xb, yb = X_test.flatten(), y_test.flatten()
 
     xv = torch.linspace(-1, 1, 500)
     yv = torch.linspace(yb.min(), yb.max(), 1000)
-    xg, yg = torch.meshgrid(
-        xv,
-        yv,
-        indexing="ij",
-    )
+    xg, yg = torch.meshgrid(xv, yv, indexing="ij")
 
     Xg, Yg = xg.unsqueeze(-1), yg.unsqueeze(-1)
-    Zb = score(Xg, Yg).squeeze(-1).le(t).float()
-    Zp = pitcp.predict(Xg, Yg, quantile=q).squeeze(-1).float()
+
+    Zb = score(Xg, Yg).squeeze(-1).le(t)
+    Zp = pitcp.predict(Xg, Yg, quantile=q).squeeze(-1).bool()
 
     Cb = score(X_test, y_test).flatten().le(t)
-    Cp = pitcp.predict(
-        X_test,
-        y_test,
-        quantile=q,
-    ).flatten()
+    Cp = pitcp.predict(X_test, y_test, quantile=q).flatten()
 
-    _, ax = plt.subplots(2, 2, figsize=(10, 8))
+    _, ax = plt.subplots(2, 1, figsize=(7, 8))
+    ax[0].scatter(xb, yb, c="#7f8c8d", s=3, alpha=0.3)
 
-    for i, (Z, C, T) in enumerate(
-        [
-            (Zb, Cb, "Base"),
-            (Zp, Cp, "PIT-corrected"),
-        ]
-    ):
-        ax[0, i].contourf(
-            xg, yg, Z, levels=[0, 0.5, 1], colors=["white", "#aae6be"], alpha=0.3
+    s = std(xv)
+    mid_idx = len(xv) // 2
+
+    configs = [
+        (Zb, Cb, "Base", "#3498db", "#2980b9"),
+        (Zp, Cp, "PIT", "#2ecc71", "#27ae60"),
+    ]
+
+    for Z, C, name, fill, dot in configs:
+        ax[0].contourf(
+            xg, yg, Z.float(), levels=[0.0, 0.5, 1.0], colors=["white", fill], alpha=0.3
         )
-        ax[0, i].contour(xg, yg, Z, levels=[0.5], colors="#5fb482")
-        ax[0, i].scatter(xb[C], yb[C], c="#5fb482", s=3, label="Covered")
-        ax[0, i].scatter(xb[~C], yb[~C], c="#dc6969", s=3, label="Uncovered")
-        ax[0, i].set_title(f"{T} conformal region")
-        ax[0, i].set_xlabel("X")
-        ax[0, i].set_ylabel("Y")
-        ax[0, i].legend(loc="upper center", markerscale=4)
+        ax[0].contour(xg, yg, Z.float(), levels=[0.5], linewidths=1.5, colors=dot)
 
-        M = Z.bool()
+        ymin = torch.where(Z, yv, torch.inf).min(1).values
+        ymax = torch.where(Z, yv, -torch.inf).max(1).values
+        marginal_coverage = C.float().mean().item()
 
-        ymin = torch.where(
-            M.any(1),
-            torch.where(M, yv, torch.inf).min(1).values,
-            torch.nan,
-        )
-        ymax = torch.where(
-            M.any(1),
-            torch.where(M, yv, -torch.inf).max(1).values,
-            torch.nan,
-        )
-
-        s = std(xv)
-
-        marginal_coverage = torch.mean(C.float()).item()
         coverage = norm.cdf((ymax / s).numpy()) - norm.cdf((ymin / s).numpy())
         l1 = torch.nanmean(torch.abs(torch.tensor(coverage) - q)).item()
 
-        ax[1, i].plot(xv, coverage, linewidth=2, c="#7db9f5")
-        ax[1, i].axhline(q, c="red", linestyle="dashed", label=f"Target coverage: {q}")
-        ax[1, i].axhline(
+        ax[1].plot(xv, coverage, linewidth=1.5, c=dot)
+        ax[1].axhline(
             marginal_coverage,
-            c="blue",
             linestyle="dashed",
-            label=f"Marginal coverage: {marginal_coverage:.3f}",
+            linewidth=1.5,
+            c=dot,
+            label=f"{name} marginal: {marginal_coverage:.2f}",
         )
-        ax[1, i].fill_between(
+        ax[1].fill_between(
             xv,
             coverage,
             q,
-            color="#7db9f5",
+            color=fill,
             alpha=0.3,
-            label=f"Mean absolute deviation: {l1:.3f}",
+            label=f"{name} MAE: {l1:.3f}",
         )
 
-        ax[1, i].set_ylim(0, 1.05)
-        ax[1, i].set_title(f"{T} conditional coverage")
-        ax[1, i].set_xlabel("X")
-        ax[1, i].set_ylabel("Coverage")
-        ax[1, i].legend(loc="lower center")
+        y_offset = 1 if name == "PIT" else -1
+        va = "bottom" if name == "PIT" else "top"
+
+        ax[0].text(
+            0,
+            ymax[mid_idx].item() + 0.05 * y_offset,
+            name,
+            color=dot,
+            ha="center",
+            va=va,
+            fontweight="bold",
+        )
+
+        ax[1].text(
+            0,
+            coverage[mid_idx] + 0.01 * y_offset,
+            name,
+            color=dot,
+            ha="center",
+            va=va,
+            fontweight="bold",
+        )
+
+    ax[0].set(title="Conformal region", xlabel="X", ylabel="Y", xlim=(-1.05, 1.05))
+    ax[1].set(
+        title="Coverage",
+        xlabel="X",
+        ylabel="Coverage",
+        xlim=(-1.05, 1.05),
+        ylim=(0, 1.05),
+    )
+    ax[1].legend(loc="lower center", ncol=2)
 
     plt.tight_layout()
-    plt.savefig(f"../figures/quantile-{q}.pdf")
+    plt.savefig(f"../figures/quantile-{q}.pdf", bbox_inches="tight")
     plt.show()
 
 
@@ -151,8 +138,8 @@ def score_y(x, y):
 
 
 for score, q in [
-    (score_abs, 0.5),
-    (score_oracle, 0.75),
+    (score_abs, 0.7),
+    (score_oracle, 0.8),
     (score_y, 0.9),
 ]:
     with plt.rc_context(
