@@ -25,7 +25,7 @@ def run(score, q):
     model = zuko.flows.SOSPF(features=1, context=1, hidden_features=(32, 32, 32))
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-    pitcp = PITCP(score, model, optimizer, n_epochs=100, batch_size=64)
+    pitcp = PITCP(score, model, optimizer, n_epochs=100)
     pitcp.fit(X_train, y_train)
     pitcp.conformalize(X_cal, y_cal)
 
@@ -49,7 +49,6 @@ def run(score, q):
     ax[0].scatter(xb, yb, c="#7f8c8d", s=3, alpha=0.5)
 
     s = std(xv)
-    mid_idx = len(xv) // 2
 
     configs = [
         (Zb, Cb, "Base", "#3498db", "#2980b9"),
@@ -57,23 +56,30 @@ def run(score, q):
     ]
 
     for Z, C, name, fill, dot in configs:
-        ax[0].contourf(
-            xg, yg, Z.float(), levels=[0.0, 0.5, 1.0], colors=["white", fill], alpha=0.3
-        )
-        ax[0].contour(xg, yg, Z.float(), levels=[0.5], linewidths=1.5, colors=dot)
-
         ymin = torch.where(Z, yv, torch.inf).min(1).values
         ymax = torch.where(Z, yv, -torch.inf).max(1).values
+
+        ax[0].fill_between(
+            xv,
+            ymin,
+            ymax,
+            color=fill,
+            alpha=0.3,
+            label=f"{name}",
+        )
+        ax[0].plot(xv, ymin, c=dot, linewidth=2)
+        ax[0].plot(xv, ymax, c=dot, linewidth=2)
+
         marginal_coverage = C.float().mean().item()
 
         coverage = norm.cdf((ymax / s).numpy()) - norm.cdf((ymin / s).numpy())
         l1 = torch.nanmean(torch.abs(torch.tensor(coverage) - q)).item()
 
-        ax[1].plot(xv, coverage, linewidth=1.5, c=dot)
+        ax[1].plot(xv, coverage, linewidth=2, c=dot, label=f"{name} conditional")
         ax[1].axhline(
             marginal_coverage,
             linestyle="dashed",
-            linewidth=1.5,
+            linewidth=2,
             c=dot,
             label=f"{name} marginal: {marginal_coverage:.2f}",
         )
@@ -86,30 +92,8 @@ def run(score, q):
             label=f"{name} MAE: {l1:.3f}",
         )
 
-        y_offset = 1 if name == "PIT" else -1
-        va = "bottom" if name == "PIT" else "top"
-
-        ax[0].text(
-            0,
-            ymax[mid_idx].item() + 0.05 * y_offset,
-            name,
-            color=dot,
-            ha="center",
-            va=va,
-            fontweight="bold",
-        )
-
-        ax[1].text(
-            0,
-            coverage[mid_idx] + 0.01 * y_offset,
-            name,
-            color=dot,
-            ha="center",
-            va=va,
-            fontweight="bold",
-        )
-
     ax[0].set(title="Conformal region", xlabel="X", ylabel="Y", xlim=(-1, 1))
+    ax[0].legend(loc="lower center", ncol=2)
     ax[1].set(
         title="Coverage", xlabel="X", ylabel="Coverage", xlim=(-1, 1), ylim=(0, 1.05)
     )
