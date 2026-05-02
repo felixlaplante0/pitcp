@@ -5,6 +5,18 @@ from scipy.stats import norm
 from pitcp import PITCP
 
 
+plt.rcParams.update(
+    {
+        "font.size": 14,
+        "axes.titlesize": 16,
+        "axes.labelsize": 14,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
+        "legend.fontsize": 12,
+    }
+)
+
+
 def std(x):
     return torch.where((x > -0.9) & (x < 0.9), torch.cos(torch.pi * x / 2), 1.0)
 
@@ -122,14 +134,4 @@ for score, q in [
     (score_oracle, 0.8),
     (score_y, 0.9),
 ]:
-    with plt.rc_context(
-        {
-            "font.size": 14,
-            "axes.titlesize": 16,
-            "axes.labelsize": 14,
-            "xtick.labelsize": 12,
-            "ytick.labelsize": 12,
-            "legend.fontsize": 12,
-        }
-    ):
-        run(score, q)
+    run(score, q)
