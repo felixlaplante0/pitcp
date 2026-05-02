@@ -46,7 +46,7 @@ def run(score, q):
     Cp = pitcp.predict(X_test, y_test, quantile=q).flatten()
 
     _, ax = plt.subplots(2, 1, figsize=(7, 8))
-    ax[0].scatter(xb, yb, c="#7f8c8d", s=3, alpha=0.3)
+    ax[0].scatter(xb, yb, c="#7f8c8d", s=3, alpha=0.5)
 
     s = std(xv)
     mid_idx = len(xv) // 2
@@ -109,13 +109,9 @@ def run(score, q):
             fontweight="bold",
         )
 
-    ax[0].set(title="Conformal region", xlabel="X", ylabel="Y", xlim=(-1.05, 1.05))
+    ax[0].set(title="Conformal region", xlabel="X", ylabel="Y", xlim=(-1, 1))
     ax[1].set(
-        title="Coverage",
-        xlabel="X",
-        ylabel="Coverage",
-        xlim=(-1.05, 1.05),
-        ylim=(0, 1.05),
+        title="Coverage", xlabel="X", ylabel="Coverage", xlim=(-1, 1), ylim=(0, 1.05)
     )
     ax[1].legend(loc="lower center", ncol=2)
 
