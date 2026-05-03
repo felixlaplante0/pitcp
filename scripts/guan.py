@@ -37,9 +37,9 @@ def run(score, q):
     model = zuko.flows.SOSPF(features=1, context=1, hidden_features=(32, 32, 32))
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-    pitcp = PITCP(score, model, optimizer, n_epochs=100)
-    pitcp.fit(X_train, y_train)
-    pitcp.conformalize(X_cal, y_cal)
+    pitcp = PITCP(model, optimizer, n_epochs=100)
+    pitcp.fit(X_train, score(X_train, y_train))
+    pitcp.conformalize(X_cal, score(X_cal, y_cal))
 
     t = torch.quantile(score(X_cal, y_cal).flatten(), q).item()
 
@@ -52,10 +52,10 @@ def run(score, q):
     Xg, Yg = xg.unsqueeze(-1), yg.unsqueeze(-1)
 
     Zb = score(Xg, Yg).squeeze(-1).le(t)
-    Zp = pitcp.predict(Xg, Yg, quantile=q).squeeze(-1).bool()
+    Zp = pitcp.predict(Xg, score(Xg, Yg), quantile=q).squeeze(-1).bool()
 
     Cb = score(X_test, y_test).flatten().le(t)
-    Cp = pitcp.predict(X_test, y_test, quantile=q).flatten()
+    Cp = pitcp.predict(X_test, score(X_test, y_test), quantile=q).flatten()
 
     _, ax = plt.subplots(2, 1, figsize=(7, 8))
     ax[0].scatter(xb, yb, c="#7f8c8d", s=3, alpha=0.5)
@@ -112,7 +112,7 @@ def run(score, q):
     ax[1].legend(loc="lower center", ncol=2)
 
     plt.tight_layout()
-    plt.savefig(f"../figures/quantile-{q}.pdf", bbox_inches="tight")
+    plt.savefig(f"../figures/quantile-{q}.pdf")
     plt.show()
 
 
