@@ -174,8 +174,14 @@ class PITCP(BaseEstimator, nn.Module):
         def _correct_mixture(x: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
             dist = self.estimator(x)
             weights = dist.logits.softmax(dim=-1)
-            means = dist.base.loc.squeeze(-1)
-            stds = dist.base.covariance_matrix.squeeze((-2, -1)).sqrt()
+
+            if hasattr(dist.base, "base_dist"):
+                means = dist.base.base_dist.loc.squeeze(-1)
+                stds = dist.base.base_dist.scale.squeeze(-1).sqrt()
+            else:
+                means = dist.base.loc.squeeze(-1)
+                stds = dist.base.covariance_matrix.squeeze((-2, -1)).sqrt()
+
             return (weights * Normal(means, stds).cdf(s)).sum(dim=-1, keepdim=True)
 
         _correct = _correct_flow if self.estimator_type_ == "flow" else _correct_mixture
