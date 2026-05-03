@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from numbers import Integral
 from typing import Self
 
@@ -23,19 +22,14 @@ class PITCP(BaseEstimator, nn.Module):
     """PIT conformal predictor using a normalizing flow or mixture density estimator.
 
     This class implements probability integral transform (PIT) conformal prediction.
-    Given a black-box base nonconformity score function, it fits a conditional density
-    estimator on the score distribution over a training set, then uses the learned
-    conditional CDF to map raw scores to PIT values. Conformal coverage guarantees are
-    obtained by comparing test PIT values against a calibration quantile.
+    Given arbitrary base non-conformity scores, it fits a conditional density estimator
+    on the score distribution over a train set, then uses the learned conditional CDF to
+    map raw scores to PIT values. Conformal coverage guarantees are obtained by
+    comparing test PIT values against a calibration quantile.
 
     The estimator must be a `zuko` lazy distribution from either `zuko.flows` (a
     normalizing flow) or `zuko.mixtures` (a mixture density network). The class
     internally detects which family is used and applies the appropriate CDF computation.
-
-    Base score settings:
-        - `base_score`: A callable `(X, y) -> s` computing a nonconformity score for
-          each sample. Must return a **column vector** of shape `(n, 1)` so that scores
-          are compatible with the conditional density estimator input.
 
     Density estimation settings:
         - `estimator`: A `zuko` lazy distribution instance conditioned on features, used
@@ -43,28 +37,24 @@ class PITCP(BaseEstimator, nn.Module):
         - `optimizer`: Optimizer used to train the density estimator via maximum
           likelihood (negative log-likelihood/forward KL divergence minimization).
 
-    Training settings:
-        - `n_epochs`: Number of full passes over the training data.
-        - `batch_size`: Mini-batch size used during both training and inference.
+    Train settings:
+        - `n_epochs`: Number of full passes over the Train data.
+        - `batch_size`: Mini-batch size used during both Train and inference.
         - `verbose`: Whether to display a `tqdm` progress bar during `fit`.
 
     Attributes:
-        base_score (Callable[[torch.Tensor, torch.Tensor], torch.Tensor]): Function
-            computing nonconformity scores from features and labels. Must return a
-            column vector of shape `(n, 1)`.
         estimator (LazyDistribution): Conditional density estimator from
             `zuko.flows` or `zuko.mixtures`.
         optimizer (torch.optim.Optimizer): Optimizer for training the estimator.
         n_epochs (int): Number of training epochs.
         batch_size (int): Batch size for data loading.
         verbose (bool | int): Whether to display a progress bar during training.
-        estimator_type_ (str): Either `"flow"` or `"mixture"`, set at
-            initialization based on the type of `estimator`.
-        scores_ (torch.Tensor): Calibration PIT scores of shape `(n_cal, 1)`,
-            stored after calling `conformalize`.
+        estimator_type_ (str): Either `flow` or `mixture`, set at initialization based
+            on the type of `estimator`.
+        scores_ (torch.Tensor): Calibration PIT scores stored after calling
+            `conformalize`.
     """
 
-    base_score: Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
     estimator: LazyDistribution
     optimizer: torch.optim.Optimizer
     n_epochs: int
@@ -85,7 +75,6 @@ class PITCP(BaseEstimator, nn.Module):
     )
     def __init__(
         self,
-        base_score: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
         estimator: LazyDistribution,
         optimizer: torch.optim.Optimizer,
         *,
@@ -96,18 +85,15 @@ class PITCP(BaseEstimator, nn.Module):
         """Initializes the PITCP instance.
 
         Args:
-            base_score (Callable[[torch.Tensor, torch.Tensor], torch.Tensor]): Function
-                computing nonconformity scores from features and labels.
             estimator (LazyDistribution): Conditional density estimator.
-            optimizer (torch.optim.Optimizer): Optimizer for training.
-            n_epochs (int, optional): Number of training epochs. Defaults to 10.
+            optimizer (torch.optim.Optimizer): Optimizer for Train.
+            n_epochs (int, optional): Number of Train epochs. Defaults to 10.
             batch_size (int, optional): Batch size for data loading. Defaults to 128.
-            verbose (bool | int, optional): Whether to show a training progress bar.
+            verbose (bool | int, optional): Whether to show a Train progress bar.
                 Defaults to True.
         """
         super().__init__()
 
-        self.base_score = base_score
         self.estimator = estimator
         self.optimizer = optimizer
         self.n_epochs = n_epochs
@@ -123,37 +109,25 @@ class PITCP(BaseEstimator, nn.Module):
                 "Estimator must be either a `zuko.flows` or `zuko.mixtures` submodule"
             )
 
-    def _get_X_s(
+    def _validate_X_s(
         self,
         X: np.typing.ArrayLike,
-        y: np.typing.ArrayLike,
+        s: np.typing.ArrayLike,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Computes base nonconformity scores from features and labels.
+        """Validates input and converts features and scores to tensors.
 
         Args:
             X (np.typing.ArrayLike): Input features.
-            y (np.typing.ArrayLike): Target labels.
+            s (np.typing.ArrayLike): Target scores.
 
         Returns:
             tuple[torch.Tensor, torch.Tensor]: Feature and score tensors.
         """
         assert_all_finite(X, input_name="X")
-        assert_all_finite(y, input_name="y")
-        check_consistent_length(X, y)
+        assert_all_finite(s, input_name="s")
+        check_consistent_length(X, s)
 
-        X = torch.as_tensor(X)  # type: ignore
-        y = torch.as_tensor(y)
-
-        dataset = torch.utils.data.TensorDataset(X, y)
-        loader = torch.utils.data.DataLoader(
-            dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-        )
-
-        return X, torch.cat(
-            [self.base_score(xb, yb).detach().cpu() for xb, yb in loader]
-        )
+        return torch.as_tensor(X), torch.as_tensor(s)
 
     @torch.no_grad()
     def _correct(self, X: torch.Tensor, s: torch.Tensor):
@@ -196,29 +170,29 @@ class PITCP(BaseEstimator, nn.Module):
         )
 
         return torch.cat(
-            [_correct(xb.to(device), sb.to(device)).detach().cpu() for xb, sb in loader]
+            [_correct(xb.to(device), sb.to(device)).cpu() for xb, sb in loader]
         )
 
     @validate_params(
         {
             "X": ["array-like"],
-            "y": ["array-like"],
+            "s": ["array-like"],
         },
         prefer_skip_nested_validation=True,
     )
-    def fit(self, X: np.typing.ArrayLike, y: np.typing.ArrayLike) -> Self:
+    def fit(self, X: np.typing.ArrayLike, s: np.typing.ArrayLike) -> Self:
         """Fits the conditional density estimator on nonconformity scores.
 
         Args:
-            X (np.typing.ArrayLike): Input features.
-            y (np.typing.ArrayLike): Target labels.
+            X (np.typing.ArrayLike): Train features.
+            s (np.typing.ArrayLike): Train scores.
 
         Returns:
             Self: The fitted estimator.
         """
         device = next(self.parameters()).device
 
-        X, s = self._get_X_s(X, y)  # type: ignore
+        X, s = self._validate_X_s(X, s)  # type: ignore
 
         dataset = torch.utils.data.TensorDataset(X, s)
         loader = torch.utils.data.DataLoader(
@@ -245,29 +219,29 @@ class PITCP(BaseEstimator, nn.Module):
                 batch_size = xb.size(0)
                 epoch_loss += loss.item() * batch_size
 
-            epoch_loss /= len(loader.dataset)
-            pbar.set_postfix({"NLL": f"{epoch_loss:.4f}"})
+            epoch_loss /= len(loader.dataset)  # type: ignore
+            pbar.set_postfix({"NLL": f"{epoch_loss:.4f}"})  # type: ignore
 
         return self
 
     @validate_params(
         {
             "X": ["array-like"],
-            "y": ["array-like"],
+            "s": ["array-like"],
         },
         prefer_skip_nested_validation=True,
     )
-    def conformalize(self, X: np.typing.ArrayLike, y: np.typing.ArrayLike) -> Self:
+    def conformalize(self, X: np.typing.ArrayLike, s: np.typing.ArrayLike) -> Self:
         """Computes and stores calibration PIT scores from a held-out dataset.
 
         Args:
             X (np.typing.ArrayLike): Calibration features.
-            y (np.typing.ArrayLike): Calibration labels.
+            s (np.typing.ArrayLike): Calibration scores.
 
         Returns:
             Self: The updated estimator.
         """
-        X, s = self._get_X_s(X, y)  # type: ignore
+        X, s = self._validate_X_s(X, s)  # type: ignore
 
         self.eval()
 
@@ -278,7 +252,7 @@ class PITCP(BaseEstimator, nn.Module):
     @validate_params(
         {
             "X": ["array-like"],
-            "y": ["array-like"],
+            "s": ["array-like"],
             "quantile": [float, torch.Tensor],
             "return_threshold": [bool],
         },
@@ -287,7 +261,7 @@ class PITCP(BaseEstimator, nn.Module):
     def predict(
         self,
         X: np.typing.ArrayLike,
-        y: np.typing.ArrayLike,
+        s: np.typing.ArrayLike,
         *,
         quantile: float | torch.Tensor = 0.9,
     ) -> torch.Tensor:
@@ -295,7 +269,7 @@ class PITCP(BaseEstimator, nn.Module):
 
         Args:
             X (np.typing.ArrayLike): Test features.
-            y (np.typing.ArrayLike): Test labels.
+            s (np.typing.ArrayLike): Test scores.
             quantile (float | torch.Tensor, optional): Target coverage level. Defaults
                 to 0.9.
 
@@ -309,7 +283,7 @@ class PITCP(BaseEstimator, nn.Module):
         level = (k / n).clamp(max=1.0)
         threshold = torch.quantile(self.scores_, level)
 
-        X, s = self._get_X_s(X, y)  # type: ignore
+        X, s = self._validate_X_s(X, s)  # type: ignore
 
         self.eval()
 
