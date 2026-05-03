@@ -62,7 +62,7 @@ for x_val, color, label, ks_text, offset in [
     )
 
 ax.set(xlabel=r"$t$", ylabel=r"$F(t)$", xlim=(-0.05, 4), ylim=(0, 1.05))
-ax.legend(loc="lower right", frameon=False, fontsize=16)
+ax.legend(loc="lower right", fontsize=16)
 
 plt.tight_layout()
 plt.savefig("../figures/ks.pdf")
