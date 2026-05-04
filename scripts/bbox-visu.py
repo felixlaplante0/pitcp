@@ -54,9 +54,9 @@ for i, idx in enumerate(idxs):
     )
 
     axs[i].imshow(res.permute(1, 2, 0))
-    axs[i].set_title(f"IoU: {current_iou:.4f}", fontsize=16)
+    axs[i].set_title(f"IoU: {current_iou:.4f}", fontsize=20)
     axs[i].axis("off")
 
 plt.tight_layout()
-plt.savefig("bbox-visu.pdf")
+plt.savefig("../figures/bbox-visu.pdf")
 plt.show()
