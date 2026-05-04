@@ -13,7 +13,8 @@ from sklearn.utils.validation import (  # type: ignore
 from torch import nn
 from torch.distributions import Normal
 from tqdm import trange
-from zuko.lazy import LazyDistribution  # type: ignore
+from zuko.flows import Flow  # type: ignore
+from zuko.mixtures import GMM  # type: ignore
 
 from ._utils import is_flow, is_mixture
 
@@ -43,7 +44,7 @@ class PITCP(BaseEstimator, nn.Module):
         - `verbose`: Whether to display a `tqdm` progress bar during `fit`.
 
     Attributes:
-        estimator (LazyDistribution): Conditional density estimator from
+        estimator (Flow | GMM): Conditional density estimator from
             `zuko.flows` or `zuko.mixtures`.
         optimizer (torch.optim.Optimizer): Optimizer for training the estimator.
         n_epochs (int): Number of training epochs.
@@ -55,7 +56,7 @@ class PITCP(BaseEstimator, nn.Module):
             `conformalize`.
     """
 
-    estimator: LazyDistribution
+    estimator: Flow | GMM
     optimizer: torch.optim.Optimizer
     n_epochs: int
     batch_size: int
@@ -65,7 +66,7 @@ class PITCP(BaseEstimator, nn.Module):
 
     @validate_params(
         {
-            "estimator": [LazyDistribution],
+            "estimator": [Flow, GMM],
             "optimizer": [torch.optim.Optimizer],
             "n_epochs": [Interval(Integral, 1, None, closed="left")],
             "verbose": ["verbose"],
@@ -75,7 +76,7 @@ class PITCP(BaseEstimator, nn.Module):
     )
     def __init__(
         self,
-        estimator: LazyDistribution,
+        estimator: Flow | GMM,
         optimizer: torch.optim.Optimizer,
         *,
         n_epochs: int = 10,
@@ -85,7 +86,7 @@ class PITCP(BaseEstimator, nn.Module):
         """Initializes the PITCP instance.
 
         Args:
-            estimator (LazyDistribution): Conditional density estimator.
+            estimator (Flow | GMM): Conditional density estimator.
             optimizer (torch.optim.Optimizer): Optimizer for Train.
             n_epochs (int, optional): Number of Train epochs. Defaults to 10.
             batch_size (int, optional): Batch size for data loading. Defaults to 128.
