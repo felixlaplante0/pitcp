@@ -67,20 +67,20 @@ val_max = max(all_q_values)
 segment_len = val_max - val_min
 
 plt.axvline(x=p_target, color="black", linestyle="dashed", alpha=0.3)
-plt.vlines(x=p_target, ymin=val_min, ymax=val_max, color="red", linewidth=2)
+plt.vlines(x=p_target, ymin=val_min, ymax=val_max, color="#ff0000", linewidth=2)
 cap_width = 0.015
 plt.hlines(
     y=[val_min, val_max],
     xmin=p_target - cap_width,
     xmax=p_target + cap_width,
-    color="red",
+    color="#ff0000",
     linewidth=2,
 )
 plt.text(
     p_target + 0.02,
     (val_min + val_max) / 2,
     f"{segment_len:.3f}",
-    color="red",
+    color="#ff0000",
     fontweight="bold",
     ha="left",
     va="center",
@@ -91,7 +91,7 @@ plt.xlabel(r"Quantile ($1 - \alpha$)")
 plt.ylabel("Nonconformity score (1 - IoU)")
 plt.title("Conditional nonconformity score quantiles by pet breed")
 
-plt.legend(loc="upper left", ncol=2, fontsize=8)
+plt.legend(loc="upper left", ncol=3, fontsize=8)
 plt.tight_layout()
 plt.savefig("../figures/bbox-quantiles.pdf")
 plt.show()
