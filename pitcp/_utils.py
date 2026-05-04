@@ -1,25 +1,26 @@
-from zuko.lazy import LazyDistribution  # type: ignore
+from zuko.flows import Flow  # type: ignore
+from zuko.mixtures import GMM  # type: ignore
 
 
-def is_flow(estimator: LazyDistribution) -> bool:
+def is_flow(estimator: object) -> bool:
     """Returns whether an object is a zuko normalizing flow.
 
     Args:
-        estimator (LazyDistribution): The object instance to test.
+        estimator (object): The object instance to test.
 
     Returns:
         bool: Whether the object is a zuko normalizing flow.
     """
-    return estimator.__class__.__module__.startswith("zuko.flows")
+    return issubclass(type(estimator), Flow)
 
 
-def is_mixture(estimator: LazyDistribution):
+def is_mixture(estimator: object):
     """Returns whether an object is a zuko mixture.
 
     Args:
-        estimator (LazyDistribution): The object instance to test.
+        estimator (object): The object instance to test.
 
     Returns:
         bool: Whether the object is a zuko mixture.
     """
-    return estimator.__class__.__module__.startswith("zuko.mixtures")
+    return issubclass(type(estimator), GMM)
