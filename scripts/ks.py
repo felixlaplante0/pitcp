@@ -54,15 +54,15 @@ for x_val, color, label, ks_text, offset in [
         (marg[idx] + cond[idx]) / 2 + offset,
         ks_text,
         color=color,
-        fontsize=16,
+        fontsize=18,
         va="center",
         ha="center",
-        rotation=45,
+        rotation=40,
         zorder=8,
     )
 
 ax.set(xlabel=r"$t$", ylabel=r"$F(t)$", xlim=(-0.05, 4), ylim=(0, 1.05))
-ax.legend(loc="lower right", fontsize=16)
+ax.legend(loc="lower right", fontsize=18)
 
 plt.tight_layout()
 plt.savefig("../figures/ks.pdf")

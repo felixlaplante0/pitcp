@@ -22,7 +22,7 @@ class PITCP(BaseEstimator, nn.Module):
     """PIT conformal predictor using a normalizing flow or mixture density estimator.
 
     This class implements probability integral transform (PIT) conformal prediction.
-    Given arbitrary base non-conformity scores, it fits a conditional density estimator
+    Given arbitrary base nonconformity scores, it fits a conditional density estimator
     on the score distribution over a train set, then uses the learned conditional CDF to
     map raw scores to PIT values. Conformal coverage guarantees are obtained by
     comparing test PIT values against a calibration quantile.
@@ -138,7 +138,7 @@ class PITCP(BaseEstimator, nn.Module):
             s (torch.Tensor): Nonconformity scores.
 
         Returns:
-            torch.Tensor: PIT-corrected non-conformity scores.
+            torch.Tensor: PIT-corrected nonconformity scores.
         """
 
         def _correct_flow(x: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
