@@ -50,18 +50,17 @@ torch.manual_seed(42)
 def score(x, y):
     return y.abs()
 
-
 # Build a normalizing flow density estimator
 model = zuko.flows.NSF(features=1, context=1, bins=4, hidden_features=(32, 32, 32))
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
 # Fit and conformalize
 pitcp = PITCP(score, model, optimizer, n_epochs=100, batch_size=64)
-pitcp.fit(X_train, score(X_train, y_train))
-pitcp.conformalize(X_cal, score(X_cal, y_cal))
+pitcp.fit(X_train, y_train)
+pitcp.conformalize(X_cal, y_cal)
 
 # Predict coverage at 90%
-covered = pitcp.predict(X_test, score(X_test, y_test), quantile=0.9)
+covered = pitcp.predict(X_test, y_test, quantile=0.9)
 print(f"Empirical coverage: {covered.float().mean():.3f}")
 ```
 
