@@ -76,6 +76,7 @@ class PITCP(BaseEstimator, nn.Module):
 
     @validate_params(
         {
+            "base_score" : [Callable],
             "estimator": [Flow, GMM],
             "optimizer": [torch.optim.Optimizer],
             "n_epochs": [Interval(Integral, 1, None, closed="left")],
