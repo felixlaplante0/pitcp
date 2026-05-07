@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from numbers import Integral
-from typing import Self
+from typing import Self, cast
 
 import numpy as np
 import torch
@@ -59,7 +59,7 @@ class PITCP(BaseEstimator, nn.Module):
         verbose (bool | int): Whether to display a progress bar during training.
         estimator_type_ (str): Either `flow` or `mixture`, set at initialization based
             on the type of `estimator`.
-        scores_ (torch.Tensor): Calibration PIT scores stored after calling
+        scores_ (torch.Tensor | None): Calibration PIT scores stored after calling
             `conformalize`.
     """
 
@@ -72,11 +72,11 @@ class PITCP(BaseEstimator, nn.Module):
     batch_size: int
     verbose: bool | int
     estimator_type_: str
-    scores_: torch.Tensor
+    scores_: torch.Tensor | None
 
     @validate_params(
         {
-            "base_score" : [Callable],
+            "base_score": [Callable],
             "estimator": [Flow, GMM],
             "optimizer": [torch.optim.Optimizer],
             "n_epochs": [Interval(Integral, 1, None, closed="left")],
@@ -117,6 +117,7 @@ class PITCP(BaseEstimator, nn.Module):
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.verbose = verbose
+        self.scores_ = None
 
         if is_flow(self.estimator):
             self.estimator_type_ = "flow"
@@ -296,10 +297,10 @@ class PITCP(BaseEstimator, nn.Module):
         """
         check_is_fitted(self, "scores_")
 
-        n = self.scores_.numel()
+        n = cast(torch.Tensor, self.scores_).numel()
         k = torch.ceil(torch.as_tensor(quantile) * (n + 1))
         level = (k / n).clamp(max=1.0)
-        threshold = torch.quantile(self.scores_, level)
+        threshold = torch.quantile(cast(torch.Tensor, self.scores_), level)
 
         X, s = self._get_X_s(X, y)  # type: ignore
 
