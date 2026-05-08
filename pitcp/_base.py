@@ -72,7 +72,7 @@ class PITCP(BaseEstimator, nn.Module):
     batch_size: int
     verbose: bool | int
     estimator_type_: str
-    scores_: torch.Tensor | None
+    scores_: torch.Tensor
 
     @validate_params(
         {
@@ -117,7 +117,6 @@ class PITCP(BaseEstimator, nn.Module):
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.verbose = verbose
-        self.scores_ = None
 
         if is_flow(self.estimator):
             self.estimator_type_ = "flow"
