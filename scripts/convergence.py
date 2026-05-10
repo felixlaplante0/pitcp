@@ -70,7 +70,7 @@ for _ in range(n_runs):
 
             batch_size = max(1, n.item() // 10)
             pitcp = PITCP(
-                score_abs, model, optimizer, n_epochs=25, batch_size=batch_size
+                score_abs, model, optimizer, n_epochs=100, batch_size=batch_size
             )
             if n.item() > 0:
                 pitcp.fit(X_train, y_train)
