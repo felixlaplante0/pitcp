@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from numbers import Integral
-from typing import Self, cast
+from typing import Self
 
 import numpy as np
 import torch
@@ -271,7 +271,7 @@ class PITCP(BaseEstimator, nn.Module):
         {
             "X": ["array-like"],
             "s": ["array-like"],
-            "quantile": [float, torch.Tensor],
+            "quantile": [float, "array-like"],
             "return_threshold": [bool],
         },
         prefer_skip_nested_validation=True,
@@ -281,25 +281,25 @@ class PITCP(BaseEstimator, nn.Module):
         X: np.typing.ArrayLike,
         y: np.typing.ArrayLike,
         *,
-        quantile: float | torch.Tensor = 0.9,
+        quantile: float | np.typing.ArrayLike = 0.9,
     ) -> torch.Tensor:
         """Predicts conformal coverage for test points.
 
         Args:
             X (np.typing.ArrayLike): Test features.
             y (np.typing.ArrayLike): Test responses.
-            quantile (float | torch.Tensor, optional): Target coverage level. Defaults
-                to 0.9.
+            quantile (float | np.typing.ArrayLike, optional): Target coverage level. 
+                Defaults to 0.9.
 
         Returns:
             torch.Tensor: Coverage indicators.
         """
         check_is_fitted(self, "scores_")
 
-        n = cast(torch.Tensor, self.scores_).numel()
+        n = self.scores_.numel()
         k = torch.ceil(torch.as_tensor(quantile) * (n + 1))
         level = (k / n).clamp(max=1.0)
-        threshold = torch.quantile(cast(torch.Tensor, self.scores_), level)
+        threshold = torch.quantile(self.scores_, level)
 
         X, s = self._get_X_s(X, y)  # type: ignore
 
@@ -307,6 +307,6 @@ class PITCP(BaseEstimator, nn.Module):
 
         u = self._correct(X, s)
         covered = u.le(threshold)
-        covered[k > n] = True
+        covered[..., k > n] = True
 
         return covered

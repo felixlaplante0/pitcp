@@ -30,6 +30,7 @@ Example:
 
     import torch
     import zuko
+
     from pitcp import PITCP
 
 
@@ -45,7 +46,7 @@ Example:
     torch.manual_seed(42)
 
     (X_train, y_train), (X_cal, y_cal), (X_test, y_test) = [
-        gen_data(n) for n in (5000, 1000, 5000)
+        gen_data(5000) for _ in range(3)
     ]
 
 
@@ -53,18 +54,19 @@ Example:
     def score(x, y):
         return y.abs()
 
+
     # Build a normalizing flow density estimator
     model = zuko.flows.NSF(features=1, context=1, bins=4, hidden_features=(32, 32, 32))
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
 
     # Fit and conformalize
-    pitcp = PITCP(score, model, optimizer, n_epochs=100, batch_size=64)
+    pitcp = PITCP(score, model, optimizer, n_epochs=10, batch_size=128)
     pitcp.fit(X_train, y_train)
     pitcp.conformalize(X_cal, y_cal)
 
-    # Predict coverage at 90%
-    covered = pitcp.predict(X_test, y_test, quantile=0.9)
-    print(f"Empirical coverage: {covered.float().mean():.3f}")
+    # Predict coverage at multiple quantiles (single float accepted)
+    covered = pitcp.predict(X_test, y_test, quantile=[0.7, 0.8, 0.9])
+    print(f"Empirical coverages: {[covered[:, k].float().mean().item() for k in range(3)]}")
 
 API Reference
 -------------
