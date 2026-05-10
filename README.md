@@ -27,7 +27,6 @@ pip install pitcp
 ```python
 import torch
 import zuko
-
 from pitcp import PITCP
 
 

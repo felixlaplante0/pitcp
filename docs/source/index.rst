@@ -30,7 +30,6 @@ Example:
 
     import torch
     import zuko
-
     from pitcp import PITCP
 
 
