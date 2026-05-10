@@ -18,15 +18,12 @@ classifiers = [
 requires = ["setuptools>=42", "setuptools-scm[toml]>=6.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["pitcp"]
+[tool.setuptools.packages.find]
+include = ["pitcp*"]
 
 [tool.setuptools_scm]
 version_scheme = "post-release"
 local_scheme = "no-local-version"
-
-[tool.setuptools.package-data]
-mypkg = ["py.typed"]
 
 [tool.ruff]
 lint.select = [
