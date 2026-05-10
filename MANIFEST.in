@@ -1,5 +1,0 @@
-graft pitcp
-recursive-exclude .github
-recursive-exclude docs **
-recursive-exclude figures *
-recursive-exclude scripts *
