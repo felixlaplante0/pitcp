@@ -71,7 +71,7 @@ class PITCP(BaseEstimator, nn.Module):
     n_epochs: int
     batch_size: int
     verbose: bool | int
-    estimator_type_: str*
+    estimator_type_: str
     scores_: torch.Tensor
 
     @validate_params(
