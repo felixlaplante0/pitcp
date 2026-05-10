@@ -71,7 +71,7 @@ class PITCP(BaseEstimator, nn.Module):
     n_epochs: int
     batch_size: int
     verbose: bool | int
-    estimator_type_: str
+    estimator_type_: str*
     scores_: torch.Tensor
 
     @validate_params(
@@ -127,7 +127,7 @@ class PITCP(BaseEstimator, nn.Module):
                 "Estimator must be either a `zuko.flows` or `zuko.mixtures` submodule"
             )
 
-    def _get_X_s(
+    def _validate_X(
         self,
         X: np.typing.ArrayLike,
         y: np.typing.ArrayLike,
@@ -208,9 +208,9 @@ class PITCP(BaseEstimator, nn.Module):
         Returns:
             Self: The fitted estimator.
         """
-        device = next(self.parameters()).device
+        X, s = self._validate_X(X, y)  # type: ignore
 
-        X, s = self._get_X_s(X, y)  # type: ignore
+        device = next(self.parameters()).device
 
         dataset = torch.utils.data.TensorDataset(X, s)
         loader = torch.utils.data.DataLoader(
@@ -259,7 +259,7 @@ class PITCP(BaseEstimator, nn.Module):
         Returns:
             Self: The updated estimator.
         """
-        X, s = self._get_X_s(X, y)  # type: ignore
+        X, s = self._validate_X(X, y)  # type: ignore
 
         self.eval()
 
@@ -288,7 +288,7 @@ class PITCP(BaseEstimator, nn.Module):
         Args:
             X (np.typing.ArrayLike): Test features.
             y (np.typing.ArrayLike): Test responses.
-            quantile (float | np.typing.ArrayLike, optional): Target coverage level. 
+            quantile (float | np.typing.ArrayLike, optional): Target coverage level.
                 Defaults to 0.9.
 
         Returns:
@@ -301,7 +301,7 @@ class PITCP(BaseEstimator, nn.Module):
         level = (k / n).clamp(max=1.0)
         threshold = torch.quantile(self.scores_, level)
 
-        X, s = self._get_X_s(X, y)  # type: ignore
+        X, s = self._validate_X(X, y)  # type: ignore
 
         self.eval()
 
