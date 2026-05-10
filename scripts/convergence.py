@@ -36,7 +36,7 @@ torch.manual_seed(42)
 
 X_cal, y_cal = gen_data(1000)
 
-Ns = torch.linspace(0, 5000, 5, dtype=int)
+Ns = torch.linspace(0, 5000, 6, dtype=int)
 qs = np.linspace(0.0, 1.0, 20).tolist()
 n_runs = 5
 
@@ -53,11 +53,10 @@ for _ in range(n_runs):
         for n in Ns:
             X_train, y_train = gen_data(n.item())
 
-            if name == "SOSPF" or n.item() == 0:
+            if name == "SOSPF":
                 model = zuko.flows.SOSPF(
                     features=1, context=1, hidden_features=(16, 16)
                 )
-                optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
             else:
                 model = zuko.mixtures.GMM(
                     features=1,
@@ -66,8 +65,12 @@ for _ in range(n_runs):
                     hidden_features=(16, 16),
                     covariance_type="diagonal",
                 )
-                optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
 
+            if n.item() == 0:
+                for param in model.parameters():
+                    param.data.zero_()
+
+            optimizer = torch.optim.Adam(model.parameters(), lr=2e-3)
             batch_size = max(1, n.item() // 10)
             pitcp = PITCP(
                 score_abs, model, optimizer, n_epochs=100, batch_size=batch_size
