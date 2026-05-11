@@ -45,7 +45,7 @@ ax[1].fill([0, 1, 1, 0], [0, 0, 0.5, 0.5], color="#3498db", alpha=0.3)
 ax[1].plot([0, 1, 1, 0, 0], [0, 0, 0.5, 0.5, 0], color="#2980b9", lw=2)
 ax[1].scatter(xu, yu, s=20, color="#2980b9")
 ax[1].text(
-    0.5, 0.54, r"$\mathrm{Uniform}(0, 1)$", ha="center", color="#2980b9", fontsize=18
+    0.5, 0.54, r"$\mathrm{Unif}(0, 1)$", ha="center", color="#2980b9", fontsize=18
 )
 
 ax[0].set(xlim=(0, 3.2), ylim=(0, 1.8))
