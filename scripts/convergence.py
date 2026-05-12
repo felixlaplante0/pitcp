@@ -4,8 +4,8 @@ import pandas as pd
 import seaborn as sns
 import torch
 import zuko
-from scipy.stats import norm
 from pitcp import PITCP
+from scipy.stats import norm
 
 plt.rcParams.update(
     {
@@ -20,7 +20,7 @@ plt.rcParams.update(
 
 
 def std(x):
-    return (0.9 * x**2 + 0.1).sqrt()
+    return (1 - 2 * x**2).abs() + 0.1
 
 
 def gen_data(n):
@@ -37,8 +37,8 @@ torch.manual_seed(42)
 X_cal, y_cal = gen_data(1000)
 
 Ns = torch.linspace(0, 5000, 6, dtype=int)
-qs = np.linspace(0.0, 1.0, 20).tolist()
-n_runs = 5
+qs = np.linspace(0.0, 1.0, 100).tolist()[1:-1]
+n_runs = 10
 
 xv = torch.linspace(-1, 1, 500)
 yv = torch.linspace(-5, 5, 1000)
@@ -55,14 +55,14 @@ for _ in range(n_runs):
 
             if name == "SOSPF":
                 model = zuko.flows.SOSPF(
-                    features=1, context=1, hidden_features=(16, 16)
+                    features=1, context=1, hidden_features=(32, 32)
                 )
             else:
                 model = zuko.mixtures.GMM(
                     features=1,
                     context=1,
-                    components=10,
-                    hidden_features=(16, 16),
+                    components=4,
+                    hidden_features=(32, 32),
                     covariance_type="diagonal",
                 )
 
@@ -70,19 +70,17 @@ for _ in range(n_runs):
                 for param in model.parameters():
                     param.data.zero_()
 
-            optimizer = torch.optim.Adam(model.parameters(), lr=2e-3)
-            batch_size = max(1, n.item() // 10)
-            pitcp = PITCP(
-                score_abs, model, optimizer, n_epochs=100, batch_size=batch_size
-            )
+            optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+            pitcp = PITCP(score_abs, model, optimizer, n_epochs=200, batch_size=256)
             if n.item() > 0:
                 pitcp.fit(X_train, y_train)
             pitcp.conformalize(X_cal, y_cal)
 
             Zp = pitcp.predict(Xg, Yg, quantile=qs).bool()
 
-            ymin = torch.where(Zp, yv.view(1, -1, 1), 0.0).min(1).values
-            ymax = torch.where(Zp, yv.view(1, -1, 1), 0.0).max(1).values
+            ymin = torch.where(Zp, yv.view(1, -1, 1), torch.inf).min(1).values
+            ymax = torch.where(Zp, yv.view(1, -1, 1), -torch.inf).max(1).values
+            ymax = torch.maximum(ymin, ymax)
 
             coverage = norm.cdf((ymax / s.view(-1, 1)).numpy()) - norm.cdf(
                 (ymin / s.view(-1, 1)).numpy()
