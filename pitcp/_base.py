@@ -55,7 +55,8 @@ class PITCP(BaseEstimator, nn.Module):
             `zuko.flows` or `zuko.mixtures`.
         optimizer (torch.optim.Optimizer): Optimizer for training the estimator.
         n_epochs (int): Number of training epochs.
-        batch_size (int): Batch size for data loading.
+        batch_size (int | None): Batch size for data loading. None means full-batch
+            training.
         verbose (bool | int): Whether to display a progress bar during training.
         estimator_type_ (str): Either `flow` or `mixture`, set at initialization based
             on the type of `estimator`.
@@ -69,7 +70,7 @@ class PITCP(BaseEstimator, nn.Module):
     estimator: Flow | GMM
     optimizer: torch.optim.Optimizer
     n_epochs: int
-    batch_size: int
+    batch_size: int | None
     verbose: bool | int
     estimator_type_: str
     scores_: torch.Tensor
@@ -81,7 +82,7 @@ class PITCP(BaseEstimator, nn.Module):
             "optimizer": [torch.optim.Optimizer],
             "n_epochs": [Interval(Integral, 1, None, closed="left")],
             "verbose": ["verbose"],
-            "batch_size": [Interval(Integral, 1, None, closed="left")],
+            "batch_size": [Interval(Integral, 1, None, closed="left"), None],
         },
         prefer_skip_nested_validation=True,
     )
@@ -94,7 +95,7 @@ class PITCP(BaseEstimator, nn.Module):
         optimizer: torch.optim.Optimizer,
         *,
         n_epochs: int = 10,
-        batch_size: int = 128,
+        batch_size: int | None = None,
         verbose: bool | int = True,
     ):
         """Initializes the PITCP instance.
@@ -105,7 +106,8 @@ class PITCP(BaseEstimator, nn.Module):
             estimator (Flow | GMM): Conditional density estimator.
             optimizer (torch.optim.Optimizer): Optimizer for Train.
             n_epochs (int, optional): Number of Train epochs. Defaults to 10.
-            batch_size (int, optional): Batch size for data loading. Defaults to 128.
+            batch_size (int | None, optional): Batch size for data loading. Defaults to
+                None.
             verbose (bool | int, optional): Whether to show a Train progress bar.
                 Defaults to True.
         """
@@ -183,7 +185,7 @@ class PITCP(BaseEstimator, nn.Module):
         dataset = torch.utils.data.TensorDataset(X, s)
         loader = torch.utils.data.DataLoader(
             dataset,
-            batch_size=self.batch_size,
+            batch_size=self.batch_size or len(dataset),
             shuffle=False,
         )
 
@@ -215,7 +217,7 @@ class PITCP(BaseEstimator, nn.Module):
         dataset = torch.utils.data.TensorDataset(X, s)
         loader = torch.utils.data.DataLoader(
             dataset,
-            batch_size=self.batch_size,
+            batch_size=self.batch_size or len(dataset),
             shuffle=True,
         )
 
