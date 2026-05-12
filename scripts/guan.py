@@ -85,7 +85,7 @@ def run(score, q):
     xb, yb = X_test.flatten(), y_test.flatten()
 
     xv = torch.linspace(-1, 1, 500)
-    yv = torch.linspace(yb.min(), yb.max(), 1000)
+    yv = torch.linspace(-5, 5, 1000)
     xg, yg = torch.meshgrid(xv, yv, indexing="ij")
 
     Xg, Yg = xg.unsqueeze(-1), yg.unsqueeze(-1)
