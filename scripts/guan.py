@@ -143,7 +143,9 @@ def run(score, q):
             label=f"{name} MAE: {l1:.3f}",
         )
 
-    ax[0].set(title="Conformal region", xlabel="X", ylabel="Y", xlim=(-1, 1))
+    ax[0].set(
+        title="Conformal region", xlabel="X", ylabel="Y", xlim=(-1, 1), ylim=(-3.5, 3.5)
+    )
     ax[0].legend(loc="lower center", ncol=3)
     ax[1].axhline(q, c="black", lw=2, ls="dashed")
     ax[1].set(
