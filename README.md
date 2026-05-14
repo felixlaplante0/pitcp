@@ -28,6 +28,7 @@ pip install pitcp
 import torch
 import zuko
 from pitcp import PITCP
+from torch.utils.data import TensorDataset
 
 
 def std(x):
@@ -57,11 +58,11 @@ optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
 
 # Fit and conformalize
 pitcp = PITCP(score, model, optimizer, n_epochs=10, batch_size=128)
-pitcp.fit(X_train, y_train)
-pitcp.conformalize(X_cal, y_cal)
+pitcp.fit(TensorDataset(X_train, y_train))
+pitcp.conformalize(TensorDataset(X_cal, y_cal))
 
 # Predict coverage at multiple quantiles (single float also accepted)
-covered = pitcp.predict(X_test, y_test, quantile=[0.7, 0.8, 0.9])
+covered = pitcp.predict(TensorDataset(X_test, y_test), quantile=[0.7, 0.8, 0.9])
 print(f"Empirical coverages: {[covered[:, k].float().mean().item() for k in range(3)]}")
 ```
 

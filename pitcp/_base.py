@@ -139,8 +139,7 @@ class PITCP(BaseEstimator, nn.Module):
         """Maps nonconformity scores to PIT values via the learned conditional CDF.
 
         Args:
-            data (Dataset): The dataset containing input features and nonconformity
-                scores.
+            data (Dataset): The dataset containing input features and labels.
 
         Returns:
             torch.Tensor: PIT-corrected nonconformity scores.
@@ -188,7 +187,7 @@ class PITCP(BaseEstimator, nn.Module):
         """Fits the conditional density estimator on nonconformity scores.
 
         Args:
-            data (Dataset): The training dataset.
+            data (Dataset): The training dataset containing input features and labels.
 
         Returns:
             Self: The fitted estimator.
@@ -235,7 +234,8 @@ class PITCP(BaseEstimator, nn.Module):
         """Computes and stores calibration PIT scores from a held-out dataset.
 
         Args:
-            data (Dataset): The calibration dataset.
+            data (Dataset): The calibration dataset containing input features and 
+                labels.
 
         Returns:
             Self: The updated estimator.
@@ -263,7 +263,7 @@ class PITCP(BaseEstimator, nn.Module):
         """Predicts conformal coverage for test points.
 
         Args:
-            data (Dataset): The test dataset.
+            data (Dataset):  The test dataset containing input features and labels.
             quantile (float | torch.Tensor, optional): Target coverage level.
                 Defaults to 0.9.
 
