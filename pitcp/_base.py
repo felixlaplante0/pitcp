@@ -129,7 +129,7 @@ class PITCP(BaseEstimator, nn.Module):
                 "Estimator must be either a `zuko.flows` or `zuko.mixtures` submodule"
             )
 
-    def _validate_X_y_y(
+    def _validate_X_y(
         self,
         X: np.typing.ArrayLike,
         y: np.typing.ArrayLike,
