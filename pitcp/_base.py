@@ -129,12 +129,12 @@ class PITCP(BaseEstimator, nn.Module):
                 "Estimator must be either a `zuko.flows` or `zuko.mixtures` submodule"
             )
 
-    def _validate_X(
+    def _validate_X_y_y(
         self,
         X: np.typing.ArrayLike,
         y: np.typing.ArrayLike,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Validates input and converts features and scores to tensors.
+        """Validates inputs and converts features and scores to tensors.
 
         Args:
             X (np.typing.ArrayLike): Input features.
@@ -210,7 +210,7 @@ class PITCP(BaseEstimator, nn.Module):
         Returns:
             Self: The fitted estimator.
         """
-        X, s = self._validate_X(X, y)  # type: ignore
+        X, s = self._validate_X_y(X, y)  # type: ignore
 
         device = next(self.parameters()).device
 
@@ -261,7 +261,7 @@ class PITCP(BaseEstimator, nn.Module):
         Returns:
             Self: The updated estimator.
         """
-        X, s = self._validate_X(X, y)  # type: ignore
+        X, s = self._validate_X_y(X, y)  # type: ignore
 
         self.eval()
 
@@ -303,7 +303,7 @@ class PITCP(BaseEstimator, nn.Module):
         level = (k / n).clamp(max=1.0)
         threshold = torch.quantile(self.scores_, level)
 
-        X, s = self._validate_X(X, y)  # type: ignore
+        X, s = self._validate_X_y(X, y)  # type: ignore
 
         self.eval()
 
