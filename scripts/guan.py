@@ -5,6 +5,7 @@ import zuko
 from pitcp import PITCP
 from scipy.stats import norm
 from sklearn.ensemble import HistGradientBoostingRegressor
+from torch.utils.data import TensorDataset
 
 plt.rcParams.update(
     {
@@ -74,8 +75,8 @@ def run(score, q):
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
     pitcp = PITCP(score, model, optimizer, n_epochs=200, batch_size=512)
-    pitcp.fit(X_train, y_train)
-    pitcp.conformalize(X_cal, y_cal)
+    pitcp.fit(TensorDataset(X_train, y_train))
+    pitcp.conformalize(TensorDataset(X_cal, y_cal))
 
     cqr = CQR(alpha=1 - q).fit(X_train.numpy(), y_train.flatten().numpy())
     cqr.conformalize(X_cal.numpy(), y_cal.flatten().numpy())
@@ -91,7 +92,7 @@ def run(score, q):
     Xg, Yg = xg.unsqueeze(-1), yg.unsqueeze(-1)
 
     Zb = score(Xg, Yg).squeeze(-1).le(t)
-    Zp = pitcp.predict(Xg, Yg, quantile=q).squeeze(-1).bool()
+    Zp = pitcp.predict(TensorDataset(Xg, Yg), quantile=q).squeeze(-1).bool()
 
     _, ax = plt.subplots(2, 1, figsize=(8, 8))
     ax[0].scatter(xb, yb, c="#7f8c8d", s=3, alpha=0.5)

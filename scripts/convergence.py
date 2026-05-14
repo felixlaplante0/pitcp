@@ -6,6 +6,7 @@ import torch
 import zuko
 from pitcp import PITCP
 from scipy.stats import norm
+from torch.utils.data import TensorDataset
 
 plt.rcParams.update(
     {
@@ -73,10 +74,10 @@ for _ in range(n_runs):
             optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
             pitcp = PITCP(score_abs, model, optimizer, n_epochs=200, batch_size=256)
             if n.item() > 0:
-                pitcp.fit(X_train, y_train)
-            pitcp.conformalize(X_cal, y_cal)
+                pitcp.fit(TensorDataset(X_train, y_train))
+            pitcp.conformalize(TensorDataset(X_cal, y_cal))
 
-            Zp = pitcp.predict(Xg, Yg, quantile=qs).bool()
+            Zp = pitcp.predict(TensorDataset(Xg, Yg), quantile=qs)
 
             ymin = torch.where(Zp, yv.view(1, -1, 1), torch.inf).min(1).values
             ymax = torch.where(Zp, yv.view(1, -1, 1), -torch.inf).max(1).values

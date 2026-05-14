@@ -31,7 +31,7 @@ def is_mixture(estimator: object):
     return issubclass(type(estimator), GMM)
 
 
-class ScoreDataset(torch.utils.Dataset):
+class ScoreDataset(Dataset):
     """A PyTorch Dataset that computes base scores for given features and labels."""
 
     def __init__(
