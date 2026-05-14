@@ -7,16 +7,17 @@ import torch
 from sklearn.base import BaseEstimator  # type: ignore
 from sklearn.utils._param_validation import Interval, validate_params  # type: ignore
 from sklearn.utils.validation import (  # type: ignore
+    assert_all_finite,  # type: ignore
+    check_consistent_length,  # type: ignore
     check_is_fitted,  # type: ignore
 )
 from torch import nn
 from torch.distributions import Normal
-from torch.utils.data import DataLoader, Dataset
 from tqdm import trange
 from zuko.flows import Flow  # type: ignore
 from zuko.mixtures import GMM  # type: ignore
 
-from ._utils import ScoreDataset, is_flow, is_mixture
+from ._utils import is_flow, is_mixture
 
 
 class PITCP(BaseEstimator, nn.Module):
@@ -33,7 +34,7 @@ class PITCP(BaseEstimator, nn.Module):
     internally detects which family is used and applies the appropriate CDF computation.
 
     Base score settings:
-        - `base_score`: A callable `(x, y) -> s` computing a nonconformity score for
+        - `base_score`: A callable `(X, y) -> s` computing a nonconformity score for
           each sample.
 
     Density estimation settings:
@@ -128,18 +129,33 @@ class PITCP(BaseEstimator, nn.Module):
                 "Estimator must be either a `zuko.flows` or `zuko.mixtures` submodule"
             )
 
-    @validate_params(
-        {
-            "data": [Dataset],
-        },
-        prefer_skip_nested_validation=True,
-    )
+    def _validate_X(
+        self,
+        X: np.typing.ArrayLike,
+        y: np.typing.ArrayLike,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Validates input and converts features and scores to tensors.
+
+        Args:
+            X (np.typing.ArrayLike): Input features.
+            y (np.typing.ArrayLike): Target responses.
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor]: Feature and score tensors.
+        """
+        assert_all_finite(X, input_name="X")
+        assert_all_finite(y, input_name="y")
+        check_consistent_length(X, y)
+
+        return torch.as_tensor(X), torch.as_tensor(self.base_score(X, y))
+
     @torch.no_grad()
-    def correct(self, data: Dataset) -> torch.Tensor:
+    def _correct(self, X: torch.Tensor, s: torch.Tensor):
         """Maps nonconformity scores to PIT values via the learned conditional CDF.
 
         Args:
-            data (Dataset): The dataset containing input features and labels.
+            x (torch.Tensor): Input features.
+            s (torch.Tensor): Nonconformity scores.
 
         Returns:
             torch.Tensor: PIT-corrected nonconformity scores.
@@ -166,10 +182,10 @@ class PITCP(BaseEstimator, nn.Module):
 
         device = next(self.parameters()).device
 
-        score_data = ScoreDataset(data, self.base_score)
-        loader = DataLoader(
-            score_data,
-            batch_size=self.batch_size or len(data),
+        dataset = torch.utils.data.TensorDataset(X, s)
+        loader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=self.batch_size or len(dataset),
             shuffle=False,
         )
 
@@ -179,25 +195,29 @@ class PITCP(BaseEstimator, nn.Module):
 
     @validate_params(
         {
-            "data": [Dataset],
+            "X": ["array-like"],
+            "y": ["array-like"],
         },
         prefer_skip_nested_validation=True,
     )
-    def fit(self, data: Dataset) -> Self:
+    def fit(self, X: np.typing.ArrayLike, y: np.typing.ArrayLike) -> Self:
         """Fits the conditional density estimator on nonconformity scores.
 
         Args:
-            data (Dataset): The training dataset containing input features and labels.
+            X (np.typing.ArrayLike): Train features.
+            y (np.typing.ArrayLike): Train responses.
 
         Returns:
             Self: The fitted estimator.
         """
+        X, s = self._validate_X(X, y)  # type: ignore
+
         device = next(self.parameters()).device
 
-        score_data = ScoreDataset(data, self.base_score)
-        loader = DataLoader(
-            score_data,
-            batch_size=self.batch_size or len(data),
+        dataset = torch.utils.data.TensorDataset(X, s)
+        loader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=self.batch_size or len(dataset),
             shuffle=True,
         )
 
@@ -226,29 +246,33 @@ class PITCP(BaseEstimator, nn.Module):
 
     @validate_params(
         {
-            "data": [Dataset],
+            "X": ["array-like"],
+            "y": ["array-like"],
         },
         prefer_skip_nested_validation=True,
     )
-    def conformalize(self, data: Dataset) -> Self:
+    def conformalize(self, X: np.typing.ArrayLike, y: np.typing.ArrayLike) -> Self:
         """Computes and stores calibration PIT scores from a held-out dataset.
 
         Args:
-            data (Dataset): The calibration dataset containing input features and 
-                labels.
+            X (np.typing.ArrayLike): Calibration features.
+            y (np.typing.ArrayLike): Calibration responses.
 
         Returns:
             Self: The updated estimator.
         """
+        X, s = self._validate_X(X, y)  # type: ignore
+
         self.eval()
 
-        self.scores_ = self.correct(data)
+        self.scores_ = self._correct(X, s)
 
         return self
 
     @validate_params(
         {
-            "data": [Dataset],
+            "X": ["array-like"],
+            "y": ["array-like"],
             "quantile": [float, "array-like"],
             "return_threshold": [bool],
         },
@@ -256,15 +280,17 @@ class PITCP(BaseEstimator, nn.Module):
     )
     def predict(
         self,
-        data: Dataset,
+        X: np.typing.ArrayLike,
+        y: np.typing.ArrayLike,
         *,
-        quantile: float | torch.Tensor = 0.9,
+        quantile: float | np.typing.ArrayLike = 0.9,
     ) -> torch.Tensor:
         """Predicts conformal coverage for test points.
 
         Args:
-            data (Dataset):  The test dataset containing input features and labels.
-            quantile (float | torch.Tensor, optional): Target coverage level.
+            X (np.typing.ArrayLike): Test features.
+            y (np.typing.ArrayLike): Test responses.
+            quantile (float | np.typing.ArrayLike, optional): Target coverage level.
                 Defaults to 0.9.
 
         Returns:
@@ -276,9 +302,12 @@ class PITCP(BaseEstimator, nn.Module):
         k = torch.ceil(torch.as_tensor(quantile) * (n + 1))
         level = (k / n).clamp(max=1.0)
         threshold = torch.quantile(self.scores_, level)
+
+        X, s = self._validate_X(X, y)  # type: ignore
+
         self.eval()
 
-        u = self.correct(data)
+        u = self._correct(X, s)
         covered = u.le(threshold)
         covered[..., k > n] = True
 
