@@ -73,7 +73,7 @@ class PITCP(BaseEstimator, nn.Module):
     batch_size: int | None
     verbose: bool | int
     estimator_type_: str
-    scores_: torch.Tensor
+    scores_: np.ndarray
 
     @validate_params(
         {
@@ -154,7 +154,7 @@ class PITCP(BaseEstimator, nn.Module):
         )
 
     @torch.no_grad()
-    def _correct(self, X: torch.Tensor, s: torch.Tensor):
+    def _correct(self, X: torch.Tensor, s: torch.Tensor) -> np.ndarray:
         """Maps nonconformity scores to PIT values via the learned conditional CDF.
 
         Args:
@@ -162,7 +162,7 @@ class PITCP(BaseEstimator, nn.Module):
             s (torch.Tensor): Nonconformity scores.
 
         Returns:
-            torch.Tensor: PIT-corrected nonconformity scores.
+            np.ndarray: PIT-corrected nonconformity scores.
         """
 
         def _correct_flow(x: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
@@ -195,7 +195,7 @@ class PITCP(BaseEstimator, nn.Module):
 
         return torch.cat(
             [_correct(xb.to(device), sb.to(device)).cpu() for xb, sb in loader]
-        )
+        ).numpy()
 
     @validate_params(
         {
@@ -288,7 +288,7 @@ class PITCP(BaseEstimator, nn.Module):
         y: np.typing.ArrayLike,
         *,
         quantile: float | np.typing.ArrayLike = 0.9,
-    ) -> torch.Tensor:
+    ) -> np.ndarray:
         """Predicts conformal coverage for test points.
 
         Args:
@@ -298,21 +298,21 @@ class PITCP(BaseEstimator, nn.Module):
                 Defaults to 0.9.
 
         Returns:
-            torch.Tensor: Coverage indicators.
+            np.ndarray: Coverage indicators.
         """
         check_is_fitted(self, "scores_")
 
-        n = self.scores_.numel()
-        k = torch.ceil(torch.as_tensor(quantile) * (n + 1))
-        level = (k / n).clamp(max=1.0)
-        threshold = torch.quantile(self.scores_, level)
+        n = self.scores_.size
+        k = np.ceil(np.asarray(quantile) * (n + 1))
+        level = np.minimum(k / n, 1.0)
+        threshold = np.quantile(self.scores_, level)
 
         X, s = self._validate_X_y(X, y)  # type: ignore
 
         self.eval()
 
         u = self._correct(X, s)
-        covered = u.le(threshold)
+        covered = u <= threshold
         covered[..., k > n] = True
 
         return covered
