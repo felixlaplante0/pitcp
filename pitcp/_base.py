@@ -241,9 +241,9 @@ class PITCP(BaseEstimator, nn.Module):
                 self.optimizer.step()
 
                 batch_size = xb.size(0)
-                epoch_loss += loss.item() * batch_size
+                epoch_loss += loss.item()
 
-            epoch_loss /= len(loader.dataset)  # type: ignore
+            epoch_loss /= len(loader)  # type: ignore
             pbar.set_postfix({"NLL": f"{epoch_loss:.4f}"})  # type: ignore
 
         return self
