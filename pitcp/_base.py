@@ -149,9 +149,7 @@ class PITCP(BaseEstimator, nn.Module):
 
         dtype = next(self.parameters()).dtype
 
-        return torch.as_tensor(X, dtype=dtype), torch.as_tensor(
-            self.base_score(X, y), dtype=dtype
-        )
+        return torch.as_tensor(X, dtype), torch.as_tensor(self.base_score(X, y), dtype)
 
     @torch.no_grad()
     def _correct(self, X: torch.Tensor, s: torch.Tensor) -> np.ndarray:
