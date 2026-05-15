@@ -147,21 +147,24 @@ class PITCP(BaseEstimator, nn.Module):
         assert_all_finite(y, input_name="y")
         check_consistent_length(X, y)
 
-        dtype = next(self.parameters()).dtype
+        dtype = next(self.parameters()).dtype or torch.get_default_dtype()
 
-        return torch.as_tensor(X, dtype), torch.as_tensor(self.base_score(X, y), dtype)
+        return torch.as_tensor(X, dtype=dtype), torch.as_tensor(
+            self.base_score(X, y), dtype=dtype
+        )
 
     @torch.no_grad()
-    def _correct(self, X: torch.Tensor, s: torch.Tensor) -> np.ndarray:
+    def _score(self, X: np.typing.ArrayLike, y: np.typing.ArrayLike) -> np.ndarray:
         """Maps nonconformity scores to PIT values via the learned conditional CDF.
 
         Args:
-            x (torch.Tensor): Input features.
-            s (torch.Tensor): Nonconformity scores.
+            X (torch.Tensor): Input features.
+            y (torch.Tensor): Input responses.
 
         Returns:
             np.ndarray: PIT-corrected nonconformity scores.
         """
+        X, s = self._validate_X_y(X, y)  # type: ignore
 
         def _correct_flow(x: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
             dist = self.estimator(x)
@@ -182,7 +185,7 @@ class PITCP(BaseEstimator, nn.Module):
 
         _correct = _correct_flow if self.estimator_type_ == "flow" else _correct_mixture
 
-        device = next(self.parameters()).device
+        device = next(self.parameters()).device or torch.get_default_device()
 
         dataset = torch.utils.data.TensorDataset(X, s)
         loader = torch.utils.data.DataLoader(
@@ -214,7 +217,7 @@ class PITCP(BaseEstimator, nn.Module):
         """
         X, s = self._validate_X_y(X, y)  # type: ignore
 
-        device = next(self.parameters()).device
+        device = next(self.parameters()).device or torch.get_default_device()
 
         dataset = torch.utils.data.TensorDataset(X, s)
         loader = torch.utils.data.DataLoader(
@@ -261,12 +264,9 @@ class PITCP(BaseEstimator, nn.Module):
         Returns:
             Self: The updated estimator.
         """
-        X, s = self._validate_X_y(X, y)  # type: ignore
-
         self.eval()
 
-        self.scores_ = self._correct(X, s)
-
+        self.scores_ = self._score(X, y)
         return self
 
     @validate_params(
@@ -303,11 +303,9 @@ class PITCP(BaseEstimator, nn.Module):
         level = np.minimum(k / n, 1.0)
         threshold = np.quantile(self.scores_, level)
 
-        X, s = self._validate_X_y(X, y)  # type: ignore
-
         self.eval()
 
-        u = self._correct(X, s)
+        u = self._score(X, y)
         covered = u <= threshold
         covered[..., k > n] = True
 
