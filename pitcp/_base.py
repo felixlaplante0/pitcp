@@ -129,7 +129,7 @@ class PITCP(BaseEstimator, nn.Module):
                 "Estimator must be either a `zuko.flows` or `zuko.mixtures` submodule"
             )
 
-    def _validate_X(
+    def _validate_X_y(
         self,
         X: np.typing.ArrayLike,
         y: np.typing.ArrayLike,
@@ -147,7 +147,11 @@ class PITCP(BaseEstimator, nn.Module):
         assert_all_finite(y, input_name="y")
         check_consistent_length(X, y)
 
-        return torch.as_tensor(X), torch.as_tensor(self.base_score(X, y))
+        dtype = next(self.parameters()).dtype
+
+        return torch.as_tensor(X, dtype=dtype), torch.as_tensor(
+            self.base_score(X, y), dtype=dtype
+        )
 
     @torch.no_grad()
     def _correct(self, X: torch.Tensor, s: torch.Tensor):
@@ -210,7 +214,7 @@ class PITCP(BaseEstimator, nn.Module):
         Returns:
             Self: The fitted estimator.
         """
-        X, s = self._validate_X(X, y)  # type: ignore
+        X, s = self._validate_X_y(X, y)  # type: ignore
 
         device = next(self.parameters()).device
 
@@ -261,7 +265,7 @@ class PITCP(BaseEstimator, nn.Module):
         Returns:
             Self: The updated estimator.
         """
-        X, s = self._validate_X(X, y)  # type: ignore
+        X, s = self._validate_X_y(X, y)  # type: ignore
 
         self.eval()
 
@@ -303,7 +307,7 @@ class PITCP(BaseEstimator, nn.Module):
         level = (k / n).clamp(max=1.0)
         threshold = torch.quantile(self.scores_, level)
 
-        X, s = self._validate_X(X, y)  # type: ignore
+        X, s = self._validate_X_y(X, y)  # type: ignore
 
         self.eval()
 
