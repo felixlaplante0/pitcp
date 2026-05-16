@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from numbers import Integral
-from typing import Self
+from typing import Self, cast
 
 import numpy as np
 import torch
@@ -12,12 +12,11 @@ from sklearn.utils.validation import (  # type: ignore
     check_is_fitted,  # type: ignore
 )
 from torch import nn
-from torch.distributions import Normal
 from tqdm import trange
 from zuko.flows import Flow  # type: ignore
 from zuko.mixtures import GMM  # type: ignore
 
-from ._utils import is_flow, is_mixture
+from ._utils import correct_mixture, invert_mixture, is_flow, is_mixture
 
 
 class PITCP(BaseEstimator, nn.Module):
@@ -158,8 +157,8 @@ class PITCP(BaseEstimator, nn.Module):
         """Maps nonconformity scores to PIT values via the learned conditional CDF.
 
         Args:
-            X (torch.Tensor): Input features.
-            y (torch.Tensor): Input responses.
+            X (np.typing.ArrayLike): Input features.
+            y (np.typing.ArrayLike): Input responses.
 
         Returns:
             np.ndarray: PIT-corrected nonconformity scores.
@@ -167,21 +166,10 @@ class PITCP(BaseEstimator, nn.Module):
         X, s = self._validate_X_y(X, y)  # type: ignore
 
         def _correct_flow(x: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
-            dist = self.estimator(x)
-            return dist.transform(s)
+            return self.estimator(x).transform(s)
 
         def _correct_mixture(x: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
-            dist = self.estimator(x)
-            weights = dist.logits.softmax(dim=-1)
-
-            if hasattr(dist.base, "base_dist"):
-                means = dist.base.base_dist.loc.squeeze(-1)
-                stds = dist.base.base_dist.scale.squeeze(-1).sqrt()
-            else:
-                means = dist.base.loc.squeeze(-1)
-                stds = dist.base.covariance_matrix.squeeze((-2, -1)).sqrt()
-
-            return (weights * Normal(means, stds).cdf(s)).sum(dim=-1, keepdim=True)
+            return correct_mixture(cast(GMM, self.estimator), x, s)
 
         _correct = _correct_flow if self.estimator_type_ == "flow" else _correct_mixture
 
@@ -198,12 +186,45 @@ class PITCP(BaseEstimator, nn.Module):
             [_correct(xb.to(device), sb.to(device)).cpu() for xb, sb in loader]
         ).numpy()
 
+    @torch.no_grad()
+    def _invert(self, X: np.typing.ArrayLike, threshold: np.ndarray) -> np.ndarray:
+        """Inverts PIT-corrected nonconformity scores via the learned conditional CDF.
+
+        Args:
+            X (np.typing.ArrayLike): Input features.
+            threshold (np.ndarray): Threshold values.
+
+        Returns:
+            np.ndarray: Inverted PIT-corrected nonconformity scores.
+        """
+        dtype = next(self.parameters()).dtype or torch.get_default_dtype()
+
+        X, threshold = (  # type: ignore
+            torch.as_tensor(X, dtype=dtype),
+            torch.as_tensor(threshold, dtype=dtype),
+        )
+
+        def _invert_flow(x: torch.Tensor) -> torch.Tensor:
+            return self.estimator(x).transform.inv(threshold)
+
+        def _invert_mixture(x: torch.Tensor) -> torch.Tensor:
+            return invert_mixture(cast(GMM, self.estimator), x, threshold)
+
+        _invert = _invert_flow if self.estimator_type_ == "flow" else _invert_mixture
+
+        device = next(self.parameters()).device or torch.get_default_device()
+
+        dataset = torch.utils.data.TensorDataset(X)
+        loader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=self.batch_size or len(dataset),
+            shuffle=False,
+        )
+
+        return torch.cat([_invert(xb.to(device)).cpu() for (xb,) in loader]).numpy()
+
     @validate_params(
-        {
-            "X": ["array-like"],
-            "y": ["array-like"],
-        },
-        prefer_skip_nested_validation=True,
+        {"X": ["array-like"], "y": ["array-like"]}, prefer_skip_nested_validation=True
     )
     def fit(self, X: np.typing.ArrayLike, y: np.typing.ArrayLike) -> Self:
         """Fits the conditional density estimator on nonconformity scores.
@@ -248,11 +269,7 @@ class PITCP(BaseEstimator, nn.Module):
         return self
 
     @validate_params(
-        {
-            "X": ["array-like"],
-            "y": ["array-like"],
-        },
-        prefer_skip_nested_validation=True,
+        {"X": ["array-like"], "y": ["array-like"]}, prefer_skip_nested_validation=True
     )
     def conformalize(self, X: np.typing.ArrayLike, y: np.typing.ArrayLike) -> Self:
         """Computes and stores calibration PIT scores from a held-out dataset.
@@ -270,12 +287,7 @@ class PITCP(BaseEstimator, nn.Module):
         return self
 
     @validate_params(
-        {
-            "X": ["array-like"],
-            "y": ["array-like"],
-            "quantile": [float, "array-like"],
-            "return_threshold": [bool],
-        },
+        {"X": ["array-like"], "y": ["array-like"], "quantile": [float, "array-like"]},
         prefer_skip_nested_validation=True,
     )
     def predict(
@@ -310,3 +322,31 @@ class PITCP(BaseEstimator, nn.Module):
         covered[..., k > n] = True
 
         return covered
+
+    @validate_params(
+        {"X": ["array-like"], "quantile": [float, "array-like"]},
+        prefer_skip_nested_validation=True,
+    )
+    def predict_interval(
+        self, X: np.typing.ArrayLike, *, quantile: float | np.typing.ArrayLike = 0.9
+    ) -> np.ndarray:
+        """Predicts conformal coverage for test points.
+
+        Args:
+            X (np.typing.ArrayLike): Test features.
+            quantile (float | np.typing.ArrayLike, optional): Target coverage level.
+                Defaults to 0.9.
+
+        Returns:
+            np.ndarray: Coverage indicators.
+        """
+        check_is_fitted(self, "scores_")
+
+        n = self.scores_.size
+        k = np.ceil(np.asarray(quantile) * (n + 1))
+        level = np.minimum(k / n, 1.0)
+        threshold = np.quantile(self.scores_, level)
+
+        self.eval()
+
+        return self._invert(X, threshold)
