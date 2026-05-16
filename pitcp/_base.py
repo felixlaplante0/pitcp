@@ -338,7 +338,7 @@ class PITCP(BaseEstimator, nn.Module):
                 Defaults to 0.9.
 
         Returns:
-            np.ndarray: Coverage indicators.
+            np.ndarray: Maximum base score threshold values.
         """
         check_is_fitted(self, "scores_")
 
