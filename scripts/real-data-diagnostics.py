@@ -5,10 +5,9 @@ import zuko
 from pitcp import PITCP
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
-
+from utils.contra import CONTRA
 from utils.cqr import CQRHyperRectangle
 from utils.hpd import HPD
-from utils.japan import JAPAN
 from utils.scp import SCP
 from utils.volume import vol_base, vol_cqr, vol_pit
 
@@ -48,7 +47,7 @@ y_train_val_scaled = y_scaler.fit_transform(y_train_val)
 y_cal_scaled = y_scaler.transform(y_valtest[half:three_quarters])
 y_test_scaled = y_scaler.transform(y_valtest[three_quarters:])
 
-# Standardize residuals (for PIT-CP and Base)
+# Standardize residuals (for PIT-CP and SCP)
 r_scaler = StandardScaler()
 residuals_val_scaled = r_scaler.fit_transform(residuals[:half])
 residuals_cal_scaled = r_scaler.transform(residuals[half:three_quarters])
@@ -71,9 +70,9 @@ hpd = HPD(model_hpd, optimizer_hpd, n_epochs=500, batch_size=1024)
 hpd.fit(X_train_val_scaled, y_train_val_scaled)
 hpd.conformalize(X_cal_scaled, y_cal_scaled)
 
-# JAPAN (uses flow learned in HPD)
-japan = JAPAN(hpd.estimator)
-japan.conformalize(X_cal_scaled, y_cal_scaled)
+# CONTRA (uses flow learned in HPD)
+contra = CONTRA(hpd.estimator)
+contra.conformalize(X_cal_scaled, y_cal_scaled)
 
 # PIT-CP
 model_pit = zuko.flows.SOSPF(features=1, context=21, hidden_features=[32, 32])
@@ -98,12 +97,12 @@ for q in [0.6, 0.7, 0.8, 0.9]:
     print(f"\nQuantile: {q}")
     results = {}
 
-    # Base (SCP)
+    # SCP (SCP)
     scp = SCP(alpha=1 - q).conformalize(X_test_scaled, scores_cal_scaled)
     covered_base = scp.predict_coverage(X_test_scaled, scores_test_scaled)
     vol_base_q1, vol_base_q2, vol_base_q3 = vol_base(scp, s_scaler, r_scaler)
 
-    results["Base"] = {
+    results["SCP"] = {
         "Gap": get_gap(covered_base, clusters),
         "Vol Q1": vol_base_q1,
         "Vol Median": vol_base_q2,
@@ -134,10 +133,10 @@ for q in [0.6, 0.7, 0.8, 0.9]:
         "Vol Q3": np.nan,
     }
 
-    # JAPAN
-    covered_japan = japan.predict_coverage(X_test_scaled, y_test_scaled, quantile=q)
-    results["JAPAN"] = {
-        "Gap": get_gap(covered_japan, clusters),
+    # CONTRA
+    covered_contra = contra.predict_coverage(X_test_scaled, y_test_scaled, quantile=q)
+    results["CONTRA"] = {
+        "Gap": get_gap(covered_contra, clusters),
         "Vol Q1": np.nan,
         "Vol Median": np.nan,
         "Vol Q3": np.nan,

@@ -44,7 +44,7 @@ def run(score_fn, inv_score_fn, q):
     cqr = CQR(alpha=1 - q).fit(X_train, y_train.flatten())
     cqr.conformalize(X_cal, y_cal.flatten())
 
-    # Base
+    # SCP
     scores_cal = score_fn(X_cal, y_cal)
     scp = SCP(alpha=1 - q).conformalize(X_cal, scores_cal)
 
@@ -65,12 +65,12 @@ def run(score_fn, inv_score_fn, q):
     # Plot intervals and coverage
     for name, fill, dot, ls in [
         ("CQR", "#e74c3c", "#c0392b", "dotted"),
-        ("Base", "#3498db", "#2980b9", "dashed"),
+        ("SCP", "#3498db", "#2980b9", "dashed"),
         ("PIT", "#2ecc71", "#27ae60", "solid"),
     ]:
         if name == "CQR":
             y_min, y_max = cqr.predict(xv[:, None])
-        elif name == "Base":
+        elif name == "SCP":
             y_min, y_max = inv_score_fn(xv, scp.predict(xv))
         else:
             lim = pit.predict(xv[:, None], quantile=q).flatten()
