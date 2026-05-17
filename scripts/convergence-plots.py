@@ -4,9 +4,8 @@ import pandas as pd
 import seaborn as sns
 import torch
 import zuko
-from scipy.stats import norm
-
 from pitcp import PITCP
+from scipy.stats import norm
 
 plt.rcParams.update(
     {
