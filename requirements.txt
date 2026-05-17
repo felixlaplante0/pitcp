@@ -1,4 +1,4 @@
-pitcp==0.8.0
+pitcp==0.9.0
 pandas
 matplotlib
 seaborn
