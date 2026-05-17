@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Sequence
 from numbers import Integral
 from typing import Self, cast
 
@@ -7,9 +7,9 @@ import torch
 from sklearn.base import BaseEstimator  # type: ignore
 from sklearn.utils._param_validation import Interval, validate_params  # type: ignore
 from sklearn.utils.validation import (  # type: ignore
-    assert_all_finite,  # type: ignore
     check_consistent_length,  # type: ignore
     check_is_fitted,  # type: ignore
+    validate_data,  # type: ignore
 )
 from torch import nn
 from tqdm import trange
@@ -23,7 +23,7 @@ class PITCP(BaseEstimator, nn.Module):
     """PIT conformal predictor using a normalizing flow or mixture density estimator.
 
     This class implements probability integral transform (PIT) conformal prediction.
-    Given a black-box base nonconformity score function, it fits a conditional density
+    Given a potentially black-box nonconformity scores, it fits a conditional density
     estimator on the score distribution over a training set, then uses the learned
     conditional CDF to map raw scores to PIT values. Conformal coverage guarantees are
     obtained by comparing test PIT values against a calibration quantile.
@@ -31,10 +31,6 @@ class PITCP(BaseEstimator, nn.Module):
     The estimator must be a `zuko` subclass, coming from either `zuko.flows.Flow` (a
     normalizing flow) or `zuko.mixtures.GMM` (a mixture density network). The class
     internally detects which family is used and applies the appropriate CDF computation.
-
-    Base score settings:
-        - `base_score`: A callable `(X, y) -> s` computing a nonconformity score for
-          each sample.
 
     Density estimation settings:
         - `estimator`: A `zuko` lazy distribution instance conditioned on features, used
@@ -48,8 +44,6 @@ class PITCP(BaseEstimator, nn.Module):
         - `verbose`: Whether to display a `tqdm` progress bar during `fit`.
 
     Attributes:
-        base_score (Callable[[np.typing.ArrayLike, np.typing.ArrayLike],
-            np.typing.ArrayLike]): Function to compute nonconformity scores.
         estimator (Flow | GMM): Conditional density estimator from
             `zuko.flows` or `zuko.mixtures`.
         optimizer (torch.optim.Optimizer): Optimizer for training the estimator.
@@ -63,9 +57,6 @@ class PITCP(BaseEstimator, nn.Module):
             `conformalize`.
     """
 
-    base_score: Callable[
-        [np.typing.ArrayLike, np.typing.ArrayLike], np.typing.ArrayLike
-    ]
     estimator: Flow | GMM
     optimizer: torch.optim.Optimizer
     n_epochs: int
@@ -76,7 +67,6 @@ class PITCP(BaseEstimator, nn.Module):
 
     @validate_params(
         {
-            "base_score": [Callable],
             "estimator": [Flow, GMM],
             "optimizer": [torch.optim.Optimizer],
             "n_epochs": [Interval(Integral, 1, None, closed="left")],
@@ -87,9 +77,6 @@ class PITCP(BaseEstimator, nn.Module):
     )
     def __init__(
         self,
-        base_score: Callable[
-            [np.typing.ArrayLike, np.typing.ArrayLike], np.typing.ArrayLike
-        ],
         estimator: Flow | GMM,
         optimizer: torch.optim.Optimizer,
         *,
@@ -100,8 +87,6 @@ class PITCP(BaseEstimator, nn.Module):
         """Initializes the PITCP instance.
 
         Args:
-            base_score (Callable[[np.typing.ArrayLike, np.typing.ArrayLike],
-                np.typing.ArrayLike]): Function to compute nonconformity scores.
             estimator (Flow | GMM): Conditional density estimator.
             optimizer (torch.optim.Optimizer): Optimizer for Train.
             n_epochs (int, optional): Number of Train epochs. Defaults to 10.
@@ -112,7 +97,6 @@ class PITCP(BaseEstimator, nn.Module):
         """
         super().__init__()
 
-        self.base_score = base_score
         self.estimator = estimator
         self.optimizer = optimizer
         self.n_epochs = n_epochs
@@ -128,42 +112,51 @@ class PITCP(BaseEstimator, nn.Module):
                 "Estimator must be either a `zuko.flows` or `zuko.mixtures` submodule"
             )
 
-    def _validate_X_y(
+    def _validate(
         self,
         X: np.typing.ArrayLike,
-        y: np.typing.ArrayLike,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+        s: np.typing.ArrayLike | None = None,
+        *,
+        reset: bool = True,
+    ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         """Validates input and converts features and scores to tensors.
 
         Args:
             X (np.typing.ArrayLike): Input features.
-            y (np.typing.ArrayLike): Target responses.
+            s (np.typing.ArrayLike | None, optional): Target scores or None. Defaults to
+                None.
+            reset (bool, optional): Whether to set the reset attribute. Deaults to True.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Feature and score tensors.
+            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Feature and optionally
+                score tensors.
         """
-        assert_all_finite(X, input_name="X")
-        assert_all_finite(y, input_name="y")
-        check_consistent_length(X, y)
-
         dtype = next(self.parameters()).dtype or torch.get_default_dtype()
+        if s is None:
+            X = validate_data(self, X, reset=reset)  # type: ignore
+            return torch.tensor(X, dtype=dtype)
 
-        return torch.as_tensor(X, dtype=dtype), torch.as_tensor(
-            self.base_score(X, y), dtype=dtype
+        X, s = validate_data(  # type: ignore
+            self,
+            X,
+            s,
+            validate_separately=({"ensure_2d": True}, {"ensure_2d": True}),
+            reset=reset,
         )
+        check_consistent_length(X, s)
+        return torch.tensor(X, dtype=dtype), torch.tensor(s, dtype=dtype)
 
     @torch.no_grad()
-    def _score(self, X: np.typing.ArrayLike, y: np.typing.ArrayLike) -> np.ndarray:
+    def _correct(self, X: torch.Tensor, s: torch.Tensor) -> np.ndarray:
         """Maps nonconformity scores to PIT values via the learned conditional CDF.
 
         Args:
-            X (np.typing.ArrayLike): Input features.
-            y (np.typing.ArrayLike): Input responses.
+            X (torch.Tensor): Input features.
+            s (torch.Tensor): Input scores.
 
         Returns:
             np.ndarray: PIT-corrected nonconformity scores.
         """
-        X, s = self._validate_X_y(X, y)  # type: ignore
 
         def _correct_flow(x: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
             return self.estimator(x).transform(s)
@@ -173,8 +166,6 @@ class PITCP(BaseEstimator, nn.Module):
 
         _correct = _correct_flow if self.estimator_type_ == "flow" else _correct_mixture
 
-        device = next(self.parameters()).device or torch.get_default_device()
-
         dataset = torch.utils.data.TensorDataset(X, s)
         loader = torch.utils.data.DataLoader(
             dataset,
@@ -182,37 +173,32 @@ class PITCP(BaseEstimator, nn.Module):
             shuffle=False,
         )
 
+        device = next(self.parameters()).device or torch.get_default_device()
         return torch.cat(
             [_correct(xb.to(device), sb.to(device)).cpu() for xb, sb in loader]
         ).numpy()
 
     @torch.no_grad()
-    def _invert(self, X: np.typing.ArrayLike, threshold: np.ndarray) -> np.ndarray:
+    def _invert(self, X: torch.Tensor, quantile: float | Sequence[float]) -> np.ndarray:
         """Inverts PIT-corrected nonconformity scores via the learned conditional CDF.
 
         Args:
-            X (np.typing.ArrayLike): Input features.
-            threshold (np.ndarray): Threshold values.
+            X (torch.Tensor): Input features.
+            quantile (float | Sequence[float], optional): Target coverage level(s).
 
         Returns:
             np.ndarray: Inverted PIT-corrected nonconformity scores.
         """
         dtype = next(self.parameters()).dtype or torch.get_default_dtype()
-
-        X, threshold = (  # type: ignore
-            torch.as_tensor(X, dtype=dtype),
-            torch.as_tensor(threshold, dtype=dtype),
-        )
+        threshold = torch.tensor(self.threshold(quantile), dtype=dtype)
 
         def _invert_flow(x: torch.Tensor) -> torch.Tensor:
             return self.estimator(x).transform.inv(threshold)
 
         def _invert_mixture(x: torch.Tensor) -> torch.Tensor:
-            return invert_mixture(cast(GMM, self.estimator), x, threshold)
+            return invert_mixture(cast(GMM, self.estimator), x, threshold)  # type: ignore
 
         _invert = _invert_flow if self.estimator_type_ == "flow" else _invert_mixture
-
-        device = next(self.parameters()).device or torch.get_default_device()
 
         dataset = torch.utils.data.TensorDataset(X)
         loader = torch.utils.data.DataLoader(
@@ -221,24 +207,23 @@ class PITCP(BaseEstimator, nn.Module):
             shuffle=False,
         )
 
+        device = next(self.parameters()).device or torch.get_default_device()
         return torch.cat([_invert(xb.to(device)).cpu() for (xb,) in loader]).numpy()
 
     @validate_params(
-        {"X": ["array-like"], "y": ["array-like"]}, prefer_skip_nested_validation=True
+        {"X": ["array-like"], "s": ["array-like"]}, prefer_skip_nested_validation=True
     )
-    def fit(self, X: np.typing.ArrayLike, y: np.typing.ArrayLike) -> Self:
+    def fit(self, X: np.typing.ArrayLike, s: np.typing.ArrayLike) -> Self:
         """Fits the conditional density estimator on nonconformity scores.
 
         Args:
             X (np.typing.ArrayLike): Train features.
-            y (np.typing.ArrayLike): Train responses.
+            s (np.typing.ArrayLike): Train scores.
 
         Returns:
             Self: The fitted estimator.
         """
-        X, s = self._validate_X_y(X, y)  # type: ignore
-
-        device = next(self.parameters()).device or torch.get_default_device()
+        X, s = self._validate(X, s)  # type: ignore
 
         dataset = torch.utils.data.TensorDataset(X, s)
         loader = torch.utils.data.DataLoader(
@@ -249,6 +234,7 @@ class PITCP(BaseEstimator, nn.Module):
 
         self.train()
 
+        device = next(self.parameters()).device or torch.get_default_device()
         pbar = trange(self.n_epochs, disable=not self.verbose, unit="epoch")
         for _ in pbar:
             epoch_loss = 0.0
@@ -269,84 +255,98 @@ class PITCP(BaseEstimator, nn.Module):
         return self
 
     @validate_params(
-        {"X": ["array-like"], "y": ["array-like"]}, prefer_skip_nested_validation=True
+        {"X": ["array-like"], "s": ["array-like"]}, prefer_skip_nested_validation=True
     )
-    def conformalize(self, X: np.typing.ArrayLike, y: np.typing.ArrayLike) -> Self:
+    def conformalize(self, X: np.typing.ArrayLike, s: np.typing.ArrayLike) -> Self:
         """Computes and stores calibration PIT scores from a held-out dataset.
 
         Args:
             X (np.typing.ArrayLike): Calibration features.
-            y (np.typing.ArrayLike): Calibration responses.
+            s (np.typing.ArrayLike): Calibration scores.
 
         Returns:
             Self: The updated estimator.
         """
         self.eval()
 
-        self.scores_ = self._score(X, y)
+        X, s = self._validate(X, s, reset=False)  # type: ignore
+        self.scores_ = self._correct(X, s)
+
         return self
 
     @validate_params(
-        {"X": ["array-like"], "y": ["array-like"], "quantile": [float, "array-like"]},
-        prefer_skip_nested_validation=True,
+        {"quantile": [float, Sequence]}, prefer_skip_nested_validation=True
     )
-    def predict(
-        self,
-        X: np.typing.ArrayLike,
-        y: np.typing.ArrayLike,
-        *,
-        quantile: float | np.typing.ArrayLike = 0.9,
-    ) -> np.ndarray:
-        """Predicts conformal coverage for test points.
+    def threshold(self, quantile: float | Sequence[float] = 0.9) -> np.ndarray:
+        """Computes the PIT threshold for a given quantile.
 
         Args:
-            X (np.typing.ArrayLike): Test features.
-            y (np.typing.ArrayLike): Test responses.
-            quantile (float | np.typing.ArrayLike, optional): Target coverage level.
+            quantile (float | Sequence[float], optional): Target coverage level(s).
                 Defaults to 0.9.
 
         Returns:
-            np.ndarray: Coverage indicators.
+            np.ndarray: PIT threshold values.
         """
         check_is_fitted(self, "scores_")
 
         n = self.scores_.size
-        k = np.ceil(np.asarray(quantile) * (n + 1))
+        quantile_1d = np.atleast_1d(np.asarray(quantile))
+        k = np.ceil(quantile_1d * (n + 1))
         level = np.minimum(k / n, 1.0)
         threshold = np.quantile(self.scores_, level)
+        threshold[k > n] = np.inf
 
-        self.eval()
-
-        u = self._score(X, y)
-        covered = u <= threshold
-        covered[..., k > n] = True
-
-        return covered
+        return threshold
 
     @validate_params(
-        {"X": ["array-like"], "quantile": [float, "array-like"]},
+        {"X": ["array-like"], "quantile": [float, Sequence]},
         prefer_skip_nested_validation=True,
     )
-    def predict_interval(
-        self, X: np.typing.ArrayLike, *, quantile: float | np.typing.ArrayLike = 0.9
+    def predict(
+        self, X: np.typing.ArrayLike, *, quantile: float | Sequence[float] = 0.9
     ) -> np.ndarray:
-        """Predicts conformal coverage for test points.
+        """Predicts conformal regions for test points.
 
         Args:
             X (np.typing.ArrayLike): Test features.
-            quantile (float | np.typing.ArrayLike, optional): Target coverage level.
+            quantile (float | Sequence[float], optional): Target coverage level(s).
                 Defaults to 0.9.
 
         Returns:
             np.ndarray: Maximum base score threshold values.
         """
         check_is_fitted(self, "scores_")
-
-        n = self.scores_.size
-        k = np.ceil(np.asarray(quantile) * (n + 1))
-        level = np.minimum(k / n, 1.0)
-        threshold = np.quantile(self.scores_, level)
+        X = self._validate(X, reset=False)  # type: ignore
 
         self.eval()
 
-        return self._invert(X, threshold)
+        return self._invert(X, quantile)  # type: ignore
+
+    @validate_params(
+        {"X": ["array-like"], "s": ["array-like"], "quantile": [float, Sequence]},
+        prefer_skip_nested_validation=True,
+    )
+    def predict_coverage(
+        self,
+        X: np.typing.ArrayLike,
+        s: np.typing.ArrayLike,
+        *,
+        quantile: float | Sequence[float] = 0.9,
+    ) -> np.ndarray:
+        """Predicts conformal coverage for test points.
+
+        Args:
+            X (np.typing.ArrayLike): Test features.
+            s (np.typing.ArrayLike): Test scores.
+            quantile (float | Sequence[float], optional): Target coverage level(s).
+                Defaults to 0.9.
+
+        Returns:
+            np.ndarray: Coverage indicators.
+        """
+        self.eval()
+
+        threshold = self.threshold(quantile)
+        X, s = self._validate(X, s, reset=False)  # type: ignore
+
+        return self._correct(X, s) <= threshold
