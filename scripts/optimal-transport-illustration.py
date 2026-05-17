@@ -2,18 +2,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import lognorm
 
-rng = np.random.default_rng(42)
 
-
+# Helper function
 def under_curve(dist, n, lo, hi):
     x = np.array([])
     while x.size < n:
-        z = dist.rvs(4 * n, random_state=rng)
+        z = dist.rvs(4 * n)
         x = np.r_[x, z[(lo <= z) & (z <= hi)]][:n]
-    return x, rng.random(n) * dist.pdf(x)
+    return x, np.random.rand(n) * dist.pdf(x)
 
 
+# Set seed for reproducibility
+np.random.seed(42)
+
+# Generate data
 x = np.linspace(0.03, 3.2, 700)
+
+# Plot results
 _, ax = plt.subplots(1, 2, figsize=(10, 4.2))
 
 curves = [
@@ -40,7 +45,8 @@ for d, fill, dot, label, pos in curves:
     ax[0].scatter(xs, ys, s=20, color=dot)
     ax[0].text(*pos, label, color=dot, fontsize=18)
 
-xu, yu = rng.random(70), 0.5 * rng.random(70)
+# Plot target distribution
+xu, yu = np.random.rand(70), 0.5 * np.random.rand(70)
 ax[1].fill([0, 1, 1, 0], [0, 0, 0.5, 0.5], color="#3498db", alpha=0.3)
 ax[1].plot([0, 1, 1, 0, 0], [0, 0, 0.5, 0.5, 0], color="#2980b9", lw=2)
 ax[1].scatter(xu, yu, s=20, color="#2980b9")
@@ -55,6 +61,7 @@ for a in ax:
     a.set_xticks([])
     a.set_yticks([])
 
+# Save figure
 plt.tight_layout()
-plt.savefig("../figures/ot.pdf")
+plt.savefig("../figures/optimal-transport.pdf")
 plt.show()

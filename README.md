@@ -55,14 +55,22 @@ def score(x, y):
 model = zuko.flows.NSF(features=1, context=1, bins=4, hidden_features=(32, 32, 32))
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
 
-# Fit and conformalize
-pitcp = PITCP(score, model, optimizer, n_epochs=10, batch_size=128)
-pitcp.fit(X_train, y_train)
-pitcp.conformalize(X_cal, y_cal)
+# Compute nonconformity scores
+s_train = score(X_train, y_train)
+s_cal = score(X_cal, y_cal)
+s_test = score(X_test, y_test)
 
-# Predict coverage at multiple quantiles (single float also accepted)
-covered = pitcp.predict(X_test, y_test, quantile=[0.7, 0.8, 0.9])
-print(f"Empirical coverages: {[covered[:, k].float().mean().item() for k in range(3)]}")
+# Fit and conformalize
+pitcp = PITCP(model, optimizer, n_epochs=10, batch_size=128)
+pitcp.fit(X_train, s_train)
+pitcp.conformalize(X_cal, s_cal)
+
+# Predict conformal regions (max score thresholds) at multiple quantiles
+limits = pitcp.predict(X_test, quantile=[0.7, 0.8, 0.9])
+
+# Predict conformal coverage
+covered = pitcp.predict_coverage(X_test, s_test, quantile=[0.7, 0.8, 0.9])
+print(f"Empirical coverages: {covered.mean(axis=0)}")
 ```
 
 ---

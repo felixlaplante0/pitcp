@@ -2,13 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import LinearSegmentedColormap
 
-plt.rcParams.update(
-    {"axes.labelsize": 14, "xtick.labelsize": 12, "ytick.labelsize": 12}
-)
+plt.rcParams.update({"xtick.labelsize": 12, "ytick.labelsize": 12})
 
+# Generate data
 t = np.linspace(1e-4, 6, 700)
 
 
+# Define CDF functions
 def cond_cdf(t, x):
     return 1 - np.exp(-(x + 1) * t)
 
@@ -19,11 +19,13 @@ def marg_cdf(t):
 
 marg = marg_cdf(t)
 
+# Plot results
 fig, ax = plt.subplots(figsize=(8, 4.2))
 
 x_vals = np.linspace(0, 1, 30)
 cmap = LinearSegmentedColormap.from_list("custom_cmap", ["#27ae60", "#c0392b"])
 
+# Plot conditional CDFs
 for x_val in x_vals:
     ax.plot(t, cond_cdf(t, x_val), color=cmap(x_val), lw=1, alpha=0.5)
 
@@ -64,6 +66,8 @@ for x_val, color, label, ks_text, offset in [
 ax.set(xlabel=r"$t$", ylabel=r"$F(t)$", xlim=(-0.05, 4), ylim=(0, 1.05))
 ax.legend(loc="lower right", fontsize=18)
 
+# Save figure
 plt.tight_layout()
-plt.savefig("../figures/ks.pdf")
+plt.savefig("../figures/kolmogorov-smirnov.pdf")
 plt.show()
+how()
