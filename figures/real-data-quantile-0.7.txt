@@ -1,6 +1,6 @@
-             Gap      Vol Q1  Vol Median       Vol Q3
-SCP     0.289409   12.985880   12.985880    12.985880
-CQR     0.118969  414.030908  907.455042  2393.949128
-HPD     0.043277         NaN         NaN          NaN
-CONTRA  0.042180         NaN         NaN          NaN
-PIT-CP  0.044892    0.554402    6.571419    78.670430
+        Gap Mean   Gap Std  Vol Q1 Mean  Vol Q1 Std  Vol Median Mean  Vol Median Std  Vol Q3 Mean  Vol Q3 Std
+CONTRA  0.045586  0.018276          NaN         NaN              NaN             NaN          NaN         NaN
+CQR     0.131177  0.020490   421.183122   21.497975       936.873334       38.977855  2478.085304  101.303083
+HPD     0.043169  0.013810          NaN         NaN              NaN             NaN          NaN         NaN
+PIT-CP  0.054916  0.019495     0.572449    0.046347         6.882899        0.583978    84.604553   10.588633
+SCP     0.276215  0.037757    12.906463    0.798655        12.906463        0.798655    12.906463    0.798655
