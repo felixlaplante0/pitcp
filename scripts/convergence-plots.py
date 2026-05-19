@@ -24,8 +24,8 @@ def std(x):
 
 
 def gen_data(n):
-    x = np.random.rand(n, 1) * 2 - 1
-    return x, np.random.randn(n, 1) * std(x)
+    x = np.random.rand(n) * 2 - 1
+    return x, np.random.randn(n) * std(x)
 
 
 # Set seed for reproducibility
@@ -61,9 +61,9 @@ for _ in range(n_runs):
             optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
             pit = PITCP(model, optimizer, n_epochs=200, batch_size=512)
             if n > 0:
-                pit.fit(X_train, np.abs(y_train))
+                pit.fit(X_train[:, None], np.abs(y_train))
             # Conformalize
-            pit.conformalize(X_cal, np.abs(y_cal))
+            pit.conformalize(X_cal[:, None], np.abs(y_cal))
 
             lims = pit.predict(xv, quantile=qs)
             y_min, y_max = -lims, lims

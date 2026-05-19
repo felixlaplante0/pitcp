@@ -7,7 +7,6 @@ import torch
 from sklearn.base import BaseEstimator  # type: ignore
 from sklearn.utils._param_validation import Interval, validate_params  # type: ignore
 from sklearn.utils.validation import (  # type: ignore
-    check_consistent_length,  # type: ignore
     check_is_fitted,  # type: ignore
     validate_data,  # type: ignore
 )
@@ -16,7 +15,7 @@ from tqdm import trange
 from zuko.flows import Flow  # type: ignore
 from zuko.mixtures import GMM  # type: ignore
 
-from ._utils import correct_mixture, invert_mixture, is_flow, is_mixture
+from ._utils import correct_mixture, invert_mixture, is_flow, is_mixture, to_1d
 
 
 class PITCP(BaseEstimator, nn.Module):
@@ -136,15 +135,8 @@ class PITCP(BaseEstimator, nn.Module):
             X = validate_data(self, X, reset=reset)  # type: ignore
             return torch.tensor(X, dtype=dtype)
 
-        X, s = validate_data(  # type: ignore
-            self,
-            X,
-            s,
-            validate_separately=({"ensure_2d": True}, {"ensure_2d": True}),
-            reset=reset,
-        )
-        check_consistent_length(X, s)
-        return torch.tensor(X, dtype=dtype), torch.tensor(s, dtype=dtype)
+        X, s = validate_data(self, X, s, reset=reset)  # type: ignore
+        return torch.tensor(X, dtype=dtype), torch.tensor(s, dtype=dtype).reshape(-1, 1)
 
     @torch.no_grad()
     def _correct(self, X: torch.Tensor, s: torch.Tensor) -> np.ndarray:
@@ -320,7 +312,7 @@ class PITCP(BaseEstimator, nn.Module):
 
         self.eval()
 
-        return self._invert(X, quantile)  # type: ignore
+        return to_1d(self._invert(X, quantile))  # type: ignore
 
     @validate_params(
         {"X": ["array-like"], "s": ["array-like"], "quantile": [float, Sequence]},
@@ -349,4 +341,4 @@ class PITCP(BaseEstimator, nn.Module):
         threshold = self.threshold(quantile)
         X, s = self._validate(X, s, reset=False)  # type: ignore
 
-        return self._correct(X, s) <= threshold
+        return to_1d(self._correct(X, s) <= threshold)

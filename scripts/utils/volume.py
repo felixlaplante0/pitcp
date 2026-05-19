@@ -38,7 +38,7 @@ def vol_pit(
     quantile: float,
 ) -> tuple[float, float, float]:
     d = r_scaler.scale_.size
-    s = s_scaler.inverse_transform(pit.predict(X, quantile=quantile))
+    s = s_scaler.inverse_transform(pit.predict(X, quantile=quantile)[:, None])
     vols = (2 * s.squeeze()) ** d * np.prod(r_scaler.scale_)
 
     return np.quantile(vols, [0.25, 0.5, 0.75]).tolist()

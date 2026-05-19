@@ -26,8 +26,8 @@ def std(x):
 
 
 def gen_data(n):
-    x = np.random.rand(n, 1) * 2 - 1
-    return x, np.random.randn(n, 1) * std(x)
+    x = np.random.rand(n) * 2 - 1
+    return x, np.random.randn(n) * std(x)
 
 
 # Set seed for reproducibility
@@ -41,20 +41,20 @@ torch.manual_seed(42)
 
 def run(score_fn, inv_score_fn, q):
     # CQR
-    cqr = CQR(alpha=1 - q).fit(X_train, y_train.flatten())
-    cqr.conformalize(X_cal, y_cal.flatten())
+    cqr = CQR(alpha=1 - q).fit(X_train[:, None], y_train)
+    cqr.conformalize(X_cal[:, None], y_cal)
 
     # SCP
     scores_cal = score_fn(X_cal, y_cal)
-    scp = SCP(alpha=1 - q).conformalize(X_cal, scores_cal)
+    scp = SCP(alpha=1 - q).conformalize(X_cal[:, None], scores_cal)
 
     # PIT-CP
     model = zuko.flows.SOSPF(features=1, context=1, hidden_features=(32, 32))
     opt = torch.optim.Adam(model.parameters(), lr=1e-3)
 
     pit = PITCP(model, opt, n_epochs=200, batch_size=512)
-    pit.fit(X_train, score_fn(X_train, y_train))
-    pit.conformalize(X_cal, scores_cal)
+    pit.fit(X_train[:, None], score_fn(X_train, y_train))
+    pit.conformalize(X_cal[:, None], scores_cal)
 
     xv = np.linspace(-1, 1, 500)
 
@@ -73,7 +73,7 @@ def run(score_fn, inv_score_fn, q):
         elif name == "SCP":
             y_min, y_max = inv_score_fn(xv, scp.predict(xv))
         else:
-            lim = pit.predict(xv[:, None], quantile=q).flatten()
+            lim = pit.predict(xv[:, None], quantile=q)
             y_min, y_max = inv_score_fn(xv, lim)
 
         ax[0].fill_between(xv, y_min, y_max, color=fill, alpha=0.3, label=name)

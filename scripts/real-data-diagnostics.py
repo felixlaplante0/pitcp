@@ -69,9 +69,9 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
     scores_test = np.max(np.abs(residuals_test_scaled), axis=1)[:, None]
 
     s_scaler = StandardScaler()
-    scores_val_scaled = s_scaler.fit_transform(scores_val)
-    scores_cal_scaled = s_scaler.transform(scores_cal)
-    scores_test_scaled = s_scaler.transform(scores_test)
+    scores_val_scaled = s_scaler.fit_transform(scores_val).flatten()
+    scores_cal_scaled = s_scaler.transform(scores_cal).flatten()
+    scores_test_scaled = s_scaler.transform(scores_test).flatten()
 
     # HPD
     model_hpd = zuko.flows.MAF(features=7, context=21, hidden_features=[32, 32])

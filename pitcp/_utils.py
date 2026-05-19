@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch.distributions import Normal
 from zuko.flows import Flow  # type: ignore
@@ -93,3 +94,17 @@ def invert_mixture(
             break
 
     return lo
+
+
+def to_1d(arr: np.ndarray):
+    """Puts array to 1D if possible.
+
+    Args:
+        arr (np.ndarray): The array to convert.
+
+    Returns:
+        np.ndarray: The converted array.
+    """
+    if arr.shape[1] > 1:
+        return arr
+    return arr.flatten()
