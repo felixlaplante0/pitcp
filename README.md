@@ -79,3 +79,26 @@ print(f"Empirical coverages: {covered.mean(axis=0)}")
 
 For tutorials, API reference, visit the official site:  
 👉 [pitcp's documentation](https://felixlaplante0.github.io/pitcp)
+
+---
+
+## 📊 Reproducing Results
+
+To reproduce the experiments and figures presented in the paper, navigate to the `scripts/` directory and run the corresponding Python scripts. Note that the scripts expect to be run from within the `scripts/` directory to correctly access data and output paths.
+
+```bash
+cd scripts
+python <script_name>.py
+```
+
+### Script Descriptions
+
+| Script | Description |
+| :--- | :--- |
+| `convergence-plots.py` | Evaluates the convergence of the PIT-CP procedure across different training sample sizes using various density estimators (SOSPF, GMM). |
+| `kolmogorov-illustration.py` | Visualizes the Kolmogorov-Smirnov distance between conditional and marginal score distributions, illustrating the challenge PIT-CP addresses. |
+| `optimal-transport-illustration.py` | Illustrates the transformation of conditional score distributions into a uniform target via the Probability Integral Transform (PIT). |
+| `real-data-diagnostics.py` | Benchmarks PIT-CP against other conformal prediction methods (SCP, CQR, HPD, CONTRA) on real-world datasets, calculating coverage gaps and prediction interval volumes. |
+| `synthetic-plots.py` | Compares the conformal regions and conditional coverage of PIT-CP, CQR, and SCP on synthetic heteroscedastic data. |
+
+Figures and results will be saved in the `figures/` directory.
