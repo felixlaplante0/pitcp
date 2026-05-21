@@ -95,7 +95,11 @@ def run(score_fn, inv_score_fn, q):
         title="Conformal region", xlabel="X", ylabel="Y", xlim=(-1, 1), ylim=(-3.5, 3.5)
     )
     ax[1].set(
-        title="Coverage", xlabel="X", ylabel="Coverage", xlim=(-1, 1), ylim=(0, 1.05)
+        title="Conditional coverage",
+        xlabel="X",
+        ylabel="Coverage",
+        xlim=(-1, 1),
+        ylim=(0, 1.05),
     )
     ax[1].axhline(q, c="k", lw=2, ls="--")
     for a in ax:
