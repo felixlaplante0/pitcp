@@ -9,14 +9,18 @@ from zuko.flows import Flow  # type: ignore
 
 class CONTRA(BaseEstimator, nn.Module):
     estimator: Flow
+    batch_size: int | None
     scores_: np.ndarray
 
     def __init__(
         self,
         estimator: Flow,
+        *,
+        batch_size:  int | None = None,
     ):
         super().__init__()
         self.estimator = estimator
+        self.batch_size = batch_size
 
     @torch.no_grad()
     def _score(self, X: torch.Tensor, y: torch.Tensor) -> np.ndarray:
@@ -59,4 +63,4 @@ class CONTRA(BaseEstimator, nn.Module):
 
         self.eval()
 
-        return self._score(X, y) <= self.threshold(quantile)
+        return (self._score(X, y) <= self.threshold(quantile)).flatten()

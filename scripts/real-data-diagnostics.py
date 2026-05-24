@@ -11,7 +11,7 @@ from utils.contra import CONTRA
 from utils.cqr import CQRHyperRectangle
 from utils.hpd import HPD
 from utils.scp import SCP
-from utils.volume import vol_base, vol_cqr, vol_pit
+from utils.volume import vol_base, vol_contra, vol_cqr, vol_hpd, vol_pit
 
 # Set seed for reproducibility
 np.random.seed(42)
@@ -74,18 +74,18 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
     scores_test_scaled = s_scaler.transform(scores_test).flatten()
 
     # HPD
-    model_hpd = zuko.flows.MAF(features=7, context=21, hidden_features=[32, 32])
+    model_hpd = zuko.flows.MAF(features=7, context=21, hidden_features=(32, 32))
     optimizer_hpd = torch.optim.Adam(model_hpd.parameters(), lr=1e-3)
     hpd = HPD(model_hpd, optimizer_hpd, n_epochs=500, batch_size=1024)
     hpd.fit(X_train_val_scaled, y_train_val_scaled)
     hpd.conformalize(X_cal_scaled, y_cal_scaled)
 
     # CONTRA (uses flow learned in HPD)
-    contra = CONTRA(hpd.estimator)
+    contra = CONTRA(hpd.estimator, batch_size=1024)
     contra.conformalize(X_cal_scaled, y_cal_scaled)
 
     # PIT-CP
-    model_pit = zuko.flows.SOSPF(features=1, context=21, hidden_features=[32, 32])
+    model_pit = zuko.flows.SOSPF(features=1, context=21, hidden_features=(16, 16))
     optimizer_pit = torch.optim.Adam(model_pit.parameters(), lr=1e-3)
     X_val_scaled = X_scaler.transform(X_valtest[:half])
     pit = PITCP(model_pit, optimizer_pit, n_epochs=1000, batch_size=1024)
@@ -93,13 +93,12 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
     pit.conformalize(X_cal_scaled, scores_cal_scaled)
 
     # K-Means diagnostics
-    clusters = KMeans(n_clusters=5, random_state=42).fit_predict(X_test_scaled)
+    clusters = KMeans(n_clusters=10, random_state=42).fit_predict(X_test_scaled)
 
-    quantiles = [0.6, 0.7, 0.8, 0.9]
     results = {}
-    for q in quantiles:
+    for q in [0.6, 0.7, 0.8, 0.9]:
         results_q = {}
-        # SCP (SCP)
+        # SCP
         scp = SCP(alpha=1 - q).conformalize(X_test_scaled, scores_cal_scaled)
         covered_base = scp.predict_coverage(X_test_scaled, scores_test_scaled)
         vol_base_q1, vol_base_q2, vol_base_q3 = vol_base(scp, s_scaler, r_scaler)
@@ -128,22 +127,26 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
 
         # HPD
         covered_hpd = hpd.predict_coverage(X_test_scaled, y_test_scaled, quantile=q)
+        vol_hpd_q1, vol_hpd_q2, vol_hpd_q3 = vol_hpd(hpd, X_test_scaled, y_scaler, q)
         results_q["HPD"] = {
             "Gap": get_gap(covered_hpd, clusters),
-            "Vol Q1": np.nan,
-            "Vol Median": np.nan,
-            "Vol Q3": np.nan,
+            "Vol Q1": vol_hpd_q1,
+            "Vol Median": vol_hpd_q2,
+            "Vol Q3": vol_hpd_q3,
         }
 
         # CONTRA
         covered_contra = contra.predict_coverage(
             X_test_scaled, y_test_scaled, quantile=q
         )
+        vol_contra_q1, vol_contra_q2, vol_contra_q3 = vol_contra(
+            contra, X_test_scaled, y_scaler, q
+        )
         results_q["CONTRA"] = {
             "Gap": get_gap(covered_contra, clusters),
-            "Vol Q1": np.nan,
-            "Vol Median": np.nan,
-            "Vol Q3": np.nan,
+            "Vol Q1": vol_contra_q1,
+            "Vol Median": vol_contra_q2,
+            "Vol Q3": vol_contra_q3,
         }
 
         # PIT-CP

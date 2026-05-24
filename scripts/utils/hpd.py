@@ -8,6 +8,8 @@ from tqdm import trange
 from zuko.flows import Flow  # type: ignore
 from zuko.mixtures import GMM  # type: ignore
 
+from .cache import cache
+
 
 class HPD(BaseEstimator, nn.Module):
     estimator: Flow | GMM
@@ -37,13 +39,19 @@ class HPD(BaseEstimator, nn.Module):
         self.batch_size = batch_size
         self.verbose = verbose
 
+    @cache
+    def _sample_nlog_prob(
+        self, dist: object, x: torch.Tensor, n_samples
+    ) -> torch.Tensor:
+        return -dist.log_prob(dist.sample((n_samples,)))
+
     @torch.no_grad()
     def _score(self, X: torch.Tensor, y: torch.Tensor) -> np.ndarray:
         def _score_batch(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
             dist = self.estimator(x)
             nlog_prob = -dist.log_prob(y)
-            nlog_prob_samples = -dist.log_prob(dist.sample((self.n_samples,)))
-            return (nlog_prob_samples <= nlog_prob).float().mean(dim=0).reshape(-1, 1)
+            covered = self._sample_nlog_prob(dist, x, self.n_samples) <= nlog_prob
+            return covered.float().mean(dim=0).reshape(-1, 1)
 
         dataset = torch.utils.data.TensorDataset(X, y)  # type: ignore
         loader = torch.utils.data.DataLoader(
@@ -112,4 +120,4 @@ class HPD(BaseEstimator, nn.Module):
 
         self.eval()
 
-        return self._score(X, y) <= self.threshold(quantile)
+        return (self._score(X, y) <= self.threshold(quantile)).flatten()

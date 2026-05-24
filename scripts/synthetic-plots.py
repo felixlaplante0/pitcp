@@ -80,15 +80,16 @@ def run(score_fn, inv_score_fn, q):
         ax[0].plot(xv, y_min, c=dot, lw=2, ls=ls)
         ax[0].plot(xv, y_max, c=dot, lw=2, ls=ls)
 
-        cov = norm.cdf(y_max / std(xv)) - norm.cdf(y_min / std(xv))
-        ax[1].plot(xv, cov, lw=2, c=dot, ls=ls, label=f"{name} cond.")
+        coverage = norm.cdf(y_max / std(xv)) - norm.cdf(y_min / std(xv))
+        mae = np.abs(coverage - coverage.mean()).mean()
+        ax[1].plot(xv, coverage, lw=2, c=dot, ls=ls, label=f"{name} cond.")
         ax[1].fill_between(
             xv,
-            cov,
-            cov.mean(),
+            coverage,
+            coverage.mean(),
             color=fill,
             alpha=0.3,
-            label=f"MAE: {np.abs(cov - cov.mean()).mean():.3f}",
+            label=f"MAE: {mae:.3f}",
         )
 
     ax[0].set(
