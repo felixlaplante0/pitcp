@@ -38,7 +38,7 @@ class PITCP(BaseEstimator, nn.Module):
           likelihood (negative log-likelihood/forward KL divergence minimization).
 
     Train settings:
-        - `n_epochs`: Number of full passes over the Train data.
+        - `n_epochs`: Number of full passes over the train data.
         - `batch_size`: Mini-batch size used during both Train and inference.
         - `verbose`: Whether to display a `tqdm` progress bar during `fit`.
 
