@@ -37,8 +37,8 @@ class PITCP(BaseEstimator, nn.Module):
         - `optimizer`: Optimizer used to train the density estimator via maximum
           likelihood (negative log-likelihood/forward KL divergence minimization).
 
-    Train settings:
-        - `n_epochs`: Number of full passes over the train data.
+    Training settings:
+        - `n_epochs`: Number of full passes over the training data.
         - `batch_size`: Mini-batch size used during both Train and inference.
         - `verbose`: Whether to display a `tqdm` progress bar during `fit`.
 
