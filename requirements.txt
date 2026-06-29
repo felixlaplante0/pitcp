@@ -1,5 +1,0 @@
-pitcp==0.10.0
-pandas
-matplotlib
-seaborn
-catboost

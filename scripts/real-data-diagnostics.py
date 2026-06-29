@@ -104,6 +104,7 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
         vol_base_q1, vol_base_q2, vol_base_q3 = vol_base(scp, s_scaler, r_scaler)
 
         results_q["SCP"] = {
+            "Marginal Coverage": covered_base.mean(),
             "Gap": get_gap(covered_base, clusters),
             "Vol Q1": vol_base_q1,
             "Vol Median": vol_base_q2,
@@ -119,6 +120,7 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
         vol_cqr_q1, vol_cqr_q2, vol_cqr_q3 = vol_cqr(cqr, X_test_scaled, y_scaler)
 
         results_q["CQR"] = {
+            "Marginal Coverage": covered_cqr.mean(),
             "Gap": get_gap(covered_cqr, clusters),
             "Vol Q1": vol_cqr_q1,
             "Vol Median": vol_cqr_q2,
@@ -129,6 +131,7 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
         covered_hpd = hpd.predict_coverage(X_test_scaled, y_test_scaled, quantile=q)
         vol_hpd_q1, vol_hpd_q2, vol_hpd_q3 = vol_hpd(hpd, X_test_scaled, y_scaler, q)
         results_q["HPD"] = {
+            "Marginal Coverage": covered_hpd.mean(),
             "Gap": get_gap(covered_hpd, clusters),
             "Vol Q1": vol_hpd_q1,
             "Vol Median": vol_hpd_q2,
@@ -143,6 +146,7 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
             contra, X_test_scaled, y_scaler, q
         )
         results_q["CONTRA"] = {
+            "Marginal Coverage": covered_contra.mean(),
             "Gap": get_gap(covered_contra, clusters),
             "Vol Q1": vol_contra_q1,
             "Vol Median": vol_contra_q2,
@@ -158,6 +162,7 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
         )
 
         results_q["PIT-CP"] = {
+            "Marginal Coverage": covered_pit.mean(),
             "Gap": get_gap(covered_pit, clusters),
             "Vol Q1": vol_pit_q1,
             "Vol Median": vol_pit_q2,
