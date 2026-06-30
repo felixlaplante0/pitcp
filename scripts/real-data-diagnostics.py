@@ -214,4 +214,4 @@ for q, dfs in results_by_q.items():
 
     print(f"\nQuantile: {q}")
     print(final_df)
-    final_df.to_string(f"../figures/{dataset_name}-real-data-quantile-{q}.txt")
+    final_df.to_string(f"../figures/{dataset_name}-quantile-{q}.txt")
