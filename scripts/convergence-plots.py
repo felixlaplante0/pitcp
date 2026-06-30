@@ -7,6 +7,7 @@ import zuko
 from pitcp import PITCP
 from scipy.stats import norm
 
+# Set plot parameters
 plt.rcParams.update(
     {
         "font.size": 14,
