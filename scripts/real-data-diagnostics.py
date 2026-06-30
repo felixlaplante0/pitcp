@@ -1,3 +1,4 @@
+import argparse
 from collections import defaultdict
 
 import numpy as np
@@ -13,19 +14,28 @@ from utils.hpd import HPD
 from utils.scp import SCP
 from utils.volume import vol_base, vol_contra, vol_cqr, vol_hpd, vol_pit
 
+parser = argparse.ArgumentParser()
+dataset_group = parser.add_mutually_exclusive_group(required=True)
+dataset_group.add_argument("--sarcos", action="store_true")
+dataset_group.add_argument("--naval", action="store_true")
+args = parser.parse_args()
+dataset_name = "sarcos" if args.sarcos else "naval"
+n_features, n_targets = (21, 7) if args.sarcos else (16, 2)
+batch_size = 1024 if args.sarcos else 512
+
 # Set seed for reproducibility
 np.random.seed(42)
 torch.manual_seed(42)
 
 # Load data
-train_data = np.loadtxt("../data/train.csv", delimiter=",")
-X_train, y_train = train_data[:, :21], train_data[:, 21:]
+train_data = np.loadtxt(f"../data/{dataset_name}-train.csv", delimiter=",")
+X_train, y_train = train_data[:, :n_features], train_data[:, n_features:]
 
-valtest_data = np.loadtxt("../data/valtest.csv", delimiter=",")
-X_valtest, y_valtest = valtest_data[:, :21], valtest_data[:, 21:]
+valtest_data = np.loadtxt(f"../data/{dataset_name}-valtest.csv", delimiter=",")
+X_valtest, y_valtest = valtest_data[:, :n_features], valtest_data[:, n_features:]
 
 # Load predictions
-y_pred = np.loadtxt("../data/pred.csv", delimiter=",")
+y_pred = np.loadtxt(f"../data/{dataset_name}-pred.csv", delimiter=",")
 
 
 def get_gap(covered, clusters):
@@ -74,21 +84,25 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
     scores_test_scaled = s_scaler.transform(scores_test).flatten()
 
     # HPD
-    model_hpd = zuko.flows.MAF(features=7, context=21, hidden_features=(32, 32))
+    model_hpd = zuko.flows.MAF(
+        features=n_targets, context=n_features, hidden_features=(32, 32)
+    )
     optimizer_hpd = torch.optim.Adam(model_hpd.parameters(), lr=1e-3)
-    hpd = HPD(model_hpd, optimizer_hpd, n_epochs=500, batch_size=1024)
+    hpd = HPD(model_hpd, optimizer_hpd, n_epochs=500, batch_size=batch_size)
     hpd.fit(X_train_val_scaled, y_train_val_scaled)
     hpd.conformalize(X_cal_scaled, y_cal_scaled)
 
     # CONTRA (uses flow learned in HPD)
-    contra = CONTRA(hpd.estimator, batch_size=1024)
+    contra = CONTRA(hpd.estimator, batch_size=batch_size)
     contra.conformalize(X_cal_scaled, y_cal_scaled)
 
     # PIT-CP
-    model_pit = zuko.flows.SOSPF(features=1, context=21, hidden_features=(16, 16))
+    model_pit = zuko.flows.SOSPF(
+        features=1, context=n_features, hidden_features=(16, 16)
+    )
     optimizer_pit = torch.optim.Adam(model_pit.parameters(), lr=1e-3)
     X_val_scaled = X_scaler.transform(X_valtest[:half])
-    pit = PITCP(model_pit, optimizer_pit, n_epochs=1000, batch_size=1024)
+    pit = PITCP(model_pit, optimizer_pit, n_epochs=1000, batch_size=batch_size)
     pit.fit(X_val_scaled, scores_val_scaled)
     pit.conformalize(X_cal_scaled, scores_cal_scaled)
 
@@ -200,4 +214,4 @@ for q, dfs in results_by_q.items():
 
     print(f"\nQuantile: {q}")
     print(final_df)
-    final_df.to_string(f"../figures/real-data-quantile-{q}.txt")
+    final_df.to_string(f"../figures/{dataset_name}-real-data-quantile-{q}.txt")
