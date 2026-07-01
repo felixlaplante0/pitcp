@@ -9,12 +9,12 @@ class CQR:
     model: CatBoostRegressor
     threshold_: float
 
-    def __init__(self, alpha: float):
+    def __init__(self, alpha: float, random_state=42):
         self.alpha = alpha
         self.model = CatBoostRegressor(
             loss_function=f"MultiQuantile:alpha={alpha / 2},{1 - alpha / 2}",
             verbose=False,
-            random_state=42,
+            random_state=random_state,
         )
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> Self:
