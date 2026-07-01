@@ -1,6 +1,6 @@
 # 🎯 PIT-CP
 
-**pit-cp** is a Python package for conformal prediction using **probability integral transform (PIT) pivotal scores**. Given any black-box nonconformity score, it fits a conditional density estimator on the score distribution and maps raw scores to PIT values, yielding valid marginal coverage at any user-specified level.
+**pitcp** is a Python package for conformal prediction using **probability integral transform (PIT) pivotal scores**. Given any black-box nonconformity score, it fits a conditional density estimator on the score distribution and maps raw scores to PIT values, yielding valid marginal coverage at any user-specified level.
 
 ---
 
@@ -17,7 +17,7 @@
 ## 🚀 Installation
 
 ```bash
-pip install pit-cp
+pip install pitcp
 ```
 
 ## 🔧 Usage
@@ -27,7 +27,7 @@ pip install pit-cp
 ```python
 import torch
 import zuko
-from pit_cp import PITCP
+from pitcp import PITCP
 
 
 def std(x):
@@ -78,7 +78,7 @@ print(f"Empirical coverages: {covered.mean(axis=0)}")
 ## 📖 Learn More
 
 For tutorials, API reference, visit the official site:  
-👉 [pit-cp's documentation](https://felixlaplante0.github.io/pit-cp)
+👉 [pitcp's documentation](https://felixlaplante0.github.io/pitcp)
 
 ---
 

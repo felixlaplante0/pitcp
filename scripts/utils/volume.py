@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from pit_cp import PITCP
+from pitcp import PITCP
 from scipy.special import gamma
 from sklearn.preprocessing import StandardScaler
 

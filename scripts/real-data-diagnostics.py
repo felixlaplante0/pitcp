@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import torch
 import zuko
-from pit_cp import PITCP
+from pitcp import PITCP
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from utils.contra import CONTRA

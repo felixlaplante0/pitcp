@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import zuko
-from pit_cp import PITCP
+from pitcp import PITCP
 from scipy.stats import norm
 from utils.cqr import CQR
 from utils.scp import SCP

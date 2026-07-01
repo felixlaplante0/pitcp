@@ -30,7 +30,7 @@ Example:
 
     import torch
     import zuko
-    from pit_cp import PITCP
+    from pitcp import PITCP
 
 
     def std(x):

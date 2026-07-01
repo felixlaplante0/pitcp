@@ -4,7 +4,7 @@ import pandas as pd
 import seaborn as sns
 import torch
 import zuko
-from pit_cp import PITCP
+from pitcp import PITCP
 from scipy.stats import norm
 
 # Set plot parameters
