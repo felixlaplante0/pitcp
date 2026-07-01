@@ -5,14 +5,14 @@ import numpy as np
 import pandas as pd
 import torch
 import zuko
-from pitcp import PITCP
+from pit_cp import PITCP
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from utils.contra import CONTRA
 from utils.cqr import CQRHyperRectangle
 from utils.hpd import HPD
 from utils.scp import SCP
-from utils.volume import vol_base, vol_contra, vol_cqr, vol_hpd, vol_pit
+from utils.volume import vol_base, vol_contra, vol_cqr, vol_hpd, vol_pitcp
 
 parser = argparse.ArgumentParser()
 dataset_group = parser.add_mutually_exclusive_group(required=True)
@@ -97,14 +97,14 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
     contra.conformalize(X_cal_scaled, y_cal_scaled)
 
     # PIT-CP
-    model_pit = zuko.flows.SOSPF(
+    model_pitcp = zuko.flows.SOSPF(
         features=1, context=n_features, hidden_features=(16, 16)
     )
-    optimizer_pit = torch.optim.Adam(model_pit.parameters(), lr=1e-3)
+    optimizer_pitcp = torch.optim.Adam(model_pitcp.parameters(), lr=1e-3)
     X_val_scaled = X_scaler.transform(X_valtest[:half])
-    pit = PITCP(model_pit, optimizer_pit, n_epochs=1000, batch_size=batch_size)
-    pit.fit(X_val_scaled, scores_val_scaled)
-    pit.conformalize(X_cal_scaled, scores_cal_scaled)
+    pitcp = PITCP(model_pitcp, optimizer_pitcp, n_epochs=1000, batch_size=batch_size)
+    pitcp.fit(X_val_scaled, scores_val_scaled)
+    pitcp.conformalize(X_cal_scaled, scores_cal_scaled)
 
     # K-Means diagnostics
     clusters = KMeans(n_clusters=10, random_state=42).fit_predict(X_test_scaled)
@@ -168,11 +168,11 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
         }
 
         # PIT-CP
-        covered_pit = pit.predict_coverage(
+        covered_pit = pitcp.predict_coverage(
             X_test_scaled, scores_test_scaled, quantile=q
         )
-        vol_pit_q1, vol_pit_q2, vol_pit_q3 = vol_pit(
-            pit, X_test_scaled, s_scaler, r_scaler, q
+        vol_pit_q1, vol_pit_q2, vol_pit_q3 = vol_pitcp(
+            pitcp, X_test_scaled, s_scaler, r_scaler, q
         )
 
         results_q["PIT-CP"] = {

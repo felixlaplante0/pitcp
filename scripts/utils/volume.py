@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from pitcp import PITCP
+from pit_cp import PITCP
 from scipy.special import gamma
 from sklearn.preprocessing import StandardScaler
 
@@ -41,15 +41,15 @@ def vol_cqr(
     return np.quantile(vols, [0.25, 0.5, 0.75]).tolist()
 
 
-def vol_pit(
-    pit: PITCP,
+def vol_pitcp(
+    pitcp: PITCP,
     X: np.ndarray,
     s_scaler: StandardScaler,
     r_scaler: StandardScaler,
     quantile: float,
 ) -> tuple[float, float, float]:
     d = r_scaler.scale_.size
-    s = s_scaler.inverse_transform(pit.predict(X, quantile=quantile)[:, None])
+    s = s_scaler.inverse_transform(pitcp.predict(X, quantile=quantile)[:, None])
     vols = (2 * s.flatten()) ** d * np.prod(r_scaler.scale_)
 
     return np.quantile(vols, [0.25, 0.5, 0.75]).tolist()
