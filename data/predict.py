@@ -5,15 +5,15 @@ from scipy.io import loadmat
 from sklearn.multioutput import MultiOutputRegressor
 from tabpfn_client import TabPFNRegressor, set_access_token
 
+# Set seed for reproducibility
+np.random.seed(42)
+
 parser = argparse.ArgumentParser()
 dataset_group = parser.add_mutually_exclusive_group(required=True)
 dataset_group.add_argument("--sarcos", action="store_true")
 dataset_group.add_argument("--naval", action="store_true")
 args = parser.parse_args()
 dataset_name = "sarcos" if args.sarcos else "naval"
-
-# Set seed for reproducibility
-np.random.seed(42)
 
 # Load data
 if args.sarcos:
