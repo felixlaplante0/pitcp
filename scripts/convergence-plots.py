@@ -63,7 +63,7 @@ for _ in range(n_runs):
             pit = PITCP(model, optimizer, n_epochs=200, batch_size=512)
             if n > 0:
                 pit.fit(X_train[:, None], np.abs(y_train))
-            # Conformalize
+
             pit.conformalize(X_cal[:, None], np.abs(y_cal))
 
             lims = pit.predict(xv, quantile=qs)
