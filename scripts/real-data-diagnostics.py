@@ -58,6 +58,7 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
     # Standardize X
     X_scaler = StandardScaler()
     X_train_val_scaled = X_scaler.fit_transform(X_train_val)
+    X_val_scaled = X_scaler.transform(X_valtest[:half])
     X_cal_scaled = X_scaler.transform(X_valtest[half:three_quarters])
     X_test_scaled = X_scaler.transform(X_valtest[three_quarters:])
 
@@ -101,7 +102,6 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
         features=1, context=n_features, hidden_features=(16, 16)
     )
     optimizer_pitcp = torch.optim.Adam(model_pitcp.parameters(), lr=1e-3)
-    X_val_scaled = X_scaler.transform(X_valtest[:half])
     pitcp = PITCP(model_pitcp, optimizer_pitcp, n_epochs=1000, batch_size=batch_size)
     pitcp.fit(X_val_scaled, scores_val_scaled)
     pitcp.conformalize(X_cal_scaled, scores_cal_scaled)
