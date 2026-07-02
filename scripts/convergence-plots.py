@@ -7,7 +7,6 @@ import zuko
 from pitcp import PITCP
 from scipy.stats import norm
 
-# Set plot parameters
 plt.rcParams.update(
     {
         "font.size": 14,
@@ -63,7 +62,7 @@ for _ in range(n_runs):
             pit = PITCP(model, optimizer, n_epochs=200, batch_size=512)
             if n > 0:
                 pit.fit(X_train[:, None], np.abs(y_train))
-
+            # Conformalize
             pit.conformalize(X_cal[:, None], np.abs(y_cal))
 
             lims = pit.predict(xv, quantile=qs)
@@ -82,8 +81,10 @@ sns.lineplot(
     x="N",
     y="MAE",
     hue="Model",
+    style="Model",
     ax=ax,
-    marker="o",
+    markers={"SOSPF": "o", "GMM": "s"},
+    dashes=False,
     palette={"SOSPF": "#2980B9", "GMM": "#C0392B"},
     linewidth=2,
     err_style="bars",
