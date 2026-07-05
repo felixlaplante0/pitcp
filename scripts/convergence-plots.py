@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -31,6 +33,7 @@ def gen_data(n):
 # Set seed for reproducibility
 np.random.seed(42)
 torch.manual_seed(42)
+ROOT = Path(__file__).resolve().parents[1]
 N_RUNS = 10
 
 # Generate data
@@ -99,7 +102,7 @@ ax.legend()
 
 # Save figure
 plt.tight_layout()
-plt.savefig("../figures/convergence.pdf")
+plt.savefig(ROOT / "figures" / "convergence.pdf")
 plt.show()
 
 plt.show()

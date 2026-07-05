@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -33,6 +35,7 @@ def gen_data(n):
 # Set seed for reproducibility
 np.random.seed(42)
 torch.manual_seed(42)
+ROOT = Path(__file__).resolve().parents[1]
 
 (X_train, y_train), (X_cal, y_cal), (X_test, y_test) = [
     gen_data(n) for n in (5000, 1000, 5000)
@@ -108,7 +111,7 @@ def run(score_fn, inv_score_fn, q):
 
     # Save figure
     plt.tight_layout()
-    plt.savefig(f"../figures/synthetic-quantile-{q}.pdf")
+    plt.savefig(ROOT / "figures" / f"synthetic-quantile-{q}.pdf")
     plt.show()
 
 

@@ -1,5 +1,6 @@
 import argparse
 from collections import defaultdict
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -26,6 +27,7 @@ batch_size = 1024 if args.sarcos else 512
 # Set seed for reproducibility
 np.random.seed(42)
 torch.manual_seed(42)
+ROOT = Path(__file__).resolve().parents[1]
 N_RUNS = 10
 
 # Load data
@@ -213,4 +215,4 @@ for q, dfs in results_by_q.items():
 
     print(f"\nQuantile: {q}")
     print(final_df)
-    final_df.to_string(f"../figures/{dataset_name}-quantile-{q}.txt")
+    final_df.to_string(ROOT / "figures" / f"{dataset_name}-quantile-{q}.txt")
