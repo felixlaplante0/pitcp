@@ -84,18 +84,21 @@ For tutorials, API reference, visit the official site:
 
 ## 📊 Reproducing Results
 
-Clone the repository, create and activate a virtual environment, and install the local package in editable mode from the repository root:
-
-```bash
-python -m pip install -e .
-```
-
-The editable installation makes `pitcp` importable from any working directory and immediately exposes local source changes. The exact package versions used for the paper are recorded in `scripts/requirements.txt`. They can be installed before the editable package when exact environment reproduction is required:
+Clone the repository, create and activate a virtual environment, and install the exact package versions used for the paper:
 
 ```bash
 python -m pip install -r scripts/requirements.txt
+```
+
+This installs the frozen `pitcp` release from PyPI together with the experimental dependencies recorded in `scripts/requirements.txt`. Do not subsequently install the repository in editable mode when reproducing the paper, because that would replace the frozen PyPI release with the local source checkout.
+
+For local development rather than exact paper reproduction, install the current checkout in editable mode from the repository root:
+
+```bash
 python -m pip install -e .
 ```
+
+The editable installation makes local source changes immediately available without reinstalling the package.
 
 ### Preparing the Real Data
 
