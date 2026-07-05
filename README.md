@@ -84,21 +84,48 @@ For tutorials, API reference, visit the official site:
 
 ## 📊 Reproducing Results
 
-To reproduce the experiments and figures presented in the paper, navigate to the `scripts/` directory and run the corresponding Python scripts. Note that the scripts expect to be run from within the `scripts/` directory to correctly access data and output paths.
+Clone the repository, create and activate a virtual environment, and install the local package in editable mode from the repository root:
 
 ```bash
-cd scripts
-python <script_name>.py
+python -m pip install -e .
 ```
+
+The editable installation makes `pitcp` importable from any working directory and immediately exposes local source changes. The exact package versions used for the paper are recorded in `scripts/requirements.txt`. They can be installed before the editable package when exact environment reproduction is required:
+
+```bash
+python -m pip install -r scripts/requirements.txt
+python -m pip install -e .
+```
+
+### Preparing the Real Data
+
+The repository contains the raw SARCOS (`data/sarcos_inv.mat`) and Naval Propulsion Plants (`data/naval.txt`) datasets. To regenerate the training, validation-test, and prediction CSV files, install the TabPFN client, replace `PUT_YOUR_API_TOKEN_HERE` in `data/predict.py` with a valid access token, and run both dataset modes:
+
+```bash
+python -m pip install tabpfn-client
+python data/predict.py --sarcos
+python data/predict.py --naval
+```
+
+These commands write `{dataset}-train.csv`, `{dataset}-valtest.csv`, and `{dataset}-pred.csv` to `data/`. The generated CSV files are already included, so this step can be skipped unless the predictions must be regenerated.
+
+### Running the Experiments
+
+Run the experiment scripts from the repository root:
+
+```bash
+python scripts/convergence-plots.py
+python scripts/synthetic-plots.py
+python scripts/real-data-diagnostics.py --sarcos
+python scripts/real-data-diagnostics.py --naval
+```
+
+The scripts resolve data and output paths from their file locations, so they do not depend on the current working directory. Figures and diagnostic tables are written to `figures/`.
 
 ### Script Descriptions
 
 | Script | Description |
 | :--- | :--- |
 | `convergence-plots.py` | Evaluates the convergence of the PIT-CP procedure across different training sample sizes using various density estimators (SOSPF, GMM). |
-| `kolmogorov-illustration.py` | Visualizes the Kolmogorov-Smirnov distance between conditional and marginal score distributions, illustrating the challenge PIT-CP addresses. |
-| `optimal-transport-illustration.py` | Illustrates the transformation of conditional score distributions into a uniform target via the Probability Integral Transform (PIT). |
 | `real-data-diagnostics.py` | Benchmarks PIT-CP against other conformal prediction methods (SCP, CQR, HPD, CONTRA) on real-world datasets, calculating coverage gaps and prediction interval volumes. |
 | `synthetic-plots.py` | Compares the conformal regions and conditional coverage of PIT-CP, CQR, and SCP on synthetic heteroscedastic data. |
-
-Figures and results will be saved in the `figures/` directory.

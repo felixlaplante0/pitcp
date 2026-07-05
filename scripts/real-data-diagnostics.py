@@ -31,14 +31,16 @@ ROOT = Path(__file__).resolve().parents[1]
 N_RUNS = 10
 
 # Load data
-train_data = np.loadtxt(f"../data/{dataset_name}-train.csv", delimiter=",")
+train_data = np.loadtxt(ROOT / "data" / f"{dataset_name}-train.csv", delimiter=",")
 X_train, y_train = train_data[:, :n_features], train_data[:, n_features:]
 
-valtest_data = np.loadtxt(f"../data/{dataset_name}-valtest.csv", delimiter=",")
+valtest_data = np.loadtxt(
+    ROOT / "data" / f"{dataset_name}-valtest.csv", delimiter=","
+)
 X_valtest, y_valtest = valtest_data[:, :n_features], valtest_data[:, n_features:]
 
 # Load predictions
-y_pred = np.loadtxt(f"../data/{dataset_name}-pred.csv", delimiter=",")
+y_pred = np.loadtxt(ROOT / "data" / f"{dataset_name}-pred.csv", delimiter=",")
 
 
 def get_gap(covered, clusters):
