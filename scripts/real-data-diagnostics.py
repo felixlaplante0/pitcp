@@ -26,6 +26,7 @@ batch_size = 1024 if args.sarcos else 512
 # Set seed for reproducibility
 np.random.seed(42)
 torch.manual_seed(42)
+N_RUNS = 10
 
 # Load data
 train_data = np.loadtxt(f"../data/{dataset_name}-train.csv", delimiter=",")
@@ -187,10 +188,8 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
     return results
 
 
-# Run 10 times
-n_runs = 10
 results_by_q = defaultdict(list)
-for _ in range(n_runs):
+for _ in range(N_RUNS):
     idx = np.random.permutation(len(X_valtest))
     X_valtest_perm = X_valtest[idx]
     y_valtest_perm = y_valtest[idx]

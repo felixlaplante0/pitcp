@@ -31,16 +31,16 @@ def gen_data(n):
 # Set seed for reproducibility
 np.random.seed(42)
 torch.manual_seed(42)
+N_RUNS = 10
 
 # Generate data
 X_cal, y_cal = gen_data(1000)
 Ns, qs = np.linspace(0, 5000, 6, dtype=int), np.linspace(0.01, 0.99, 98).tolist()
-n_runs = 10
 
 xv = np.linspace(-1, 1, 500)[:, None]
 
 data = []
-for _ in range(n_runs):
+for _ in range(N_RUNS):
     for name in ["SOSPF", "GMM"]:
         for n in Ns:
             X_train, y_train = gen_data(n)
