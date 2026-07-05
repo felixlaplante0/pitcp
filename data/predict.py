@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 
 import numpy as np
 from scipy.io import loadmat
@@ -7,6 +8,7 @@ from tabpfn_client import TabPFNRegressor, set_access_token
 
 # Set seed for reproducibility
 np.random.seed(42)
+ROOT = Path(__file__).resolve().parents[1]
 
 parser = argparse.ArgumentParser()
 dataset_group = parser.add_mutually_exclusive_group(required=True)
@@ -17,11 +19,11 @@ dataset_name = "sarcos" if args.sarcos else "naval"
 
 # Load data
 if args.sarcos:
-    mat = loadmat("sarcos_inv.mat")
+    mat = loadmat(ROOT / "data" / "sarcos_inv.mat")
     data = mat["sarcos_inv"]
     X, y = data[:, :21], data[:, 21:]
 else:
-    data = np.loadtxt("naval.txt")
+    data = np.loadtxt(ROOT / "data" / "naval.txt")
     X, y = data[:, :-2], data[:, -2:]
 
 # Shuffle
@@ -56,6 +58,6 @@ valtest_output = np.hstack([X_valtest, y_valtest])
 
 y_valtest_pred = model.predict(X_valtest)
 
-np.savetxt(f"{dataset_name}-train.csv", train_output, delimiter=",")
-np.savetxt(f"{dataset_name}-valtest.csv", valtest_output, delimiter=",")
-np.savetxt(f"{dataset_name}-pred.csv", y_valtest_pred, delimiter=",")
+np.savetxt(ROOT / "data" / f"{dataset_name}-train.csv", train_output, delimiter=",")
+np.savetxt(ROOT / "data" / f"{dataset_name}-valtest.csv", valtest_output, delimiter=",")
+np.savetxt(ROOT / "data" / f"{dataset_name}-pred.csv", y_valtest_pred, delimiter=",")
