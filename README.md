@@ -112,6 +112,12 @@ python data/predict.py --naval
 
 These commands write `{dataset}-train.csv`, `{dataset}-valtest.csv`, and `{dataset}-pred.csv` to `data/`. The generated CSV files are already included, so this step can be skipped unless the predictions must be regenerated.
 
+### Dataset Attribution and Licensing
+
+The SARCOS inverse-dynamics dataset was provided by Sethu Vijayakumar and is distributed through the [Gaussian Processes for Machine Learning dataset repository](https://gaussianprocess.org/gpml/data/). Users should cite Vijayakumar and Schaal (2000), *LWPR: An O(n) Algorithm for Incremental Real Time Learning in High Dimensional Space*. No explicit redistribution license has been identified for SARCOS. Its inclusion in this repository should not be interpreted as granting reuse or redistribution rights.
+
+The Naval Propulsion Plants dataset is licensed under the [Creative Commons Attribution 4.0 International license](https://creativecommons.org/licenses/by/4.0/). Users should cite Coraddu et al. (2014), *Condition Based Maintenance of Naval Propulsion Plants*, [UCI Machine Learning Repository](https://doi.org/10.24432/C5K31K).
+
 ### Running the Experiments
 
 Run the experiment scripts from the repository root:
