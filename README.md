@@ -1,5 +1,7 @@
 # 🎯 PIT-CP
 
+[![codecov](https://codecov.io/gh/felixlaplante0/pitcp/graph/badge.svg)](https://codecov.io/gh/felixlaplante0/pitcp)
+
 **pitcp** is a Python package for conformal prediction using **probability integral transform (PIT) pivotal scores**. Given any black-box nonconformity score, it fits a conditional density estimator on the score distribution and maps raw scores to PIT values, yielding valid marginal coverage at any user-specified level.
 
 ---
