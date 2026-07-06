@@ -32,14 +32,8 @@ def gen_data(n):
     return x, np.random.randn(n) * std(x)
 
 
-# Set seed for reproducibility
-np.random.seed(42)
-torch.manual_seed(42)
 ROOT = Path(__file__).resolve().parents[1]
-
-(X_train, y_train), (X_cal, y_cal), (X_test, y_test) = [
-    gen_data(n) for n in (5000, 1000, 5000)
-]
+X_train = y_train = X_cal = y_cal = X_test = y_test = None
 
 
 def run(score_fn, inv_score_fn, q):
@@ -145,10 +139,23 @@ def inv_score_y(x, s):
     return np.full_like(s, -10), s
 
 
-# Execute runs
-for score_fn, inv_score_fn, q in [
-    (score_abs, inv_score_abs, 0.7),
-    (score_hpd, inv_score_hpd, 0.8),
-    (score_y, inv_score_y, 0.9),
-]:
-    run(score_fn, inv_score_fn, q)
+def main():
+    """Runs synthetic experiments and saves their figures."""
+    global X_train, y_train, X_cal, y_cal, X_test, y_test
+
+    np.random.seed(42)
+    torch.manual_seed(42)
+    (X_train, y_train), (X_cal, y_cal), (X_test, y_test) = [
+        gen_data(n) for n in (5000, 1000, 5000)
+    ]
+
+    for score_fn, inv_score_fn, quantile in [
+        (score_abs, inv_score_abs, 0.7),
+        (score_hpd, inv_score_hpd, 0.8),
+        (score_y, inv_score_y, 0.9),
+    ]:
+        run(score_fn, inv_score_fn, quantile)
+
+
+if __name__ == "__main__":
+    main()

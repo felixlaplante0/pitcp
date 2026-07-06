@@ -9,13 +9,13 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     container:
-      image: python:latest
+      image: python:3.13
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Install ruff
         run: pip install ruff
       - name: Format check
-        run: ruff format pitcp
+        run: ruff format --check pitcp tests
       - name: Lint
-        run: ruff check pitcp
+        run: ruff check pitcp tests

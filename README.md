@@ -80,6 +80,9 @@ print(f"Empirical coverages: {covered.mean(axis=0)}")
 For tutorials, API reference, visit the official site:  
 👉 [pitcp's documentation](https://felixlaplante0.github.io/pitcp)
 
+The method is described in [*A Post-Processing Conformal Prediction Approach
+for Conditional Coverage via Pivotal Scores*](https://doi.org/10.48550/arXiv.2605.25852).
+
 ---
 
 ## 📊 Reproducing Results
@@ -90,7 +93,11 @@ Clone the repository, create and activate a virtual environment, and install the
 python -m pip install -r scripts/requirements.txt
 ```
 
-This installs the frozen `pitcp` release from PyPI together with the experimental dependencies recorded in `scripts/requirements.txt`. Do not subsequently install the repository in editable mode when reproducing the paper, because that would replace the frozen PyPI release with the local source checkout.
+This installs the frozen `pitcp` release from PyPI together with the
+experimental dependencies recorded in `scripts/requirements.txt`.
+Do not subsequently install the repository in editable mode when reproducing
+the paper, because that would replace the frozen PyPI release with the local
+source checkout.
 
 For local development rather than exact paper reproduction, install the current checkout in editable mode from the repository root:
 
@@ -102,21 +109,60 @@ The editable installation makes local source changes immediately available witho
 
 ### Preparing the Real Data
 
-The repository contains the raw SARCOS (`data/sarcos_inv.mat`) and Naval Propulsion Plants (`data/naval.txt`) datasets. To regenerate the training, validation-test, and prediction CSV files, install the TabPFN client, replace `PUT_YOUR_API_TOKEN_HERE` in `data/predict.py` with a valid access token, and run both dataset modes:
+The repository contains the raw SARCOS (`data/sarcos_inv.mat`) and Naval Propulsion Plants (`data/naval.txt`) datasets. To regenerate the training, validation-test, and prediction CSV files, install the TabPFN client, set the `TABPFN_ACCESS_TOKEN` environment variable to a valid access token, and run both dataset modes:
 
 ```bash
 python -m pip install tabpfn-client
+```
+
+On PowerShell:
+
+```powershell
+$env:TABPFN_ACCESS_TOKEN="your-token"
 python data/predict.py --sarcos
 python data/predict.py --naval
 ```
 
+On Linux or macOS:
+
+```bash
+export TABPFN_ACCESS_TOKEN="your-token"
+python data/predict.py --sarcos
+python data/predict.py --naval
+```
+
+The token remains in the current terminal session and is not written to the
+repository.
+
 These commands write `{dataset}-train.csv`, `{dataset}-valtest.csv`, and `{dataset}-pred.csv` to `data/`. The generated CSV files are already included, so this step can be skipped unless the predictions must be regenerated.
+
+The paper experiments use Python 3.13 and the dependencies in
+`scripts/requirements.txt`. Verify downloaded and generated data against
+`data/SHA256SUMS` before running the experiments. The committed prediction
+files are the canonical reproduction artifacts because results returned by the
+remote TabPFN service may change independently of this repository.
+
+On systems with `sha256sum`, verify the artifacts with:
+
+```bash
+cd data
+sha256sum --check SHA256SUMS
+```
 
 ### Dataset Attribution and Licensing
 
-The SARCOS inverse-dynamics dataset was provided by Sethu Vijayakumar and is distributed through the [Gaussian Processes for Machine Learning dataset repository](https://gaussianprocess.org/gpml/data/). Users should cite Vijayakumar and Schaal (2000), *LWPR: An O(n) Algorithm for Incremental Real Time Learning in High Dimensional Space*. No explicit redistribution license has been identified for SARCOS. Its inclusion in this repository should not be interpreted as granting reuse or redistribution rights.
+The SARCOS inverse-dynamics dataset was provided by Sethu Vijayakumar and
+is distributed through the [Gaussian Processes for Machine Learning dataset
+repository](https://gaussianprocess.org/gpml/data/). Users should cite
+Vijayakumar and Schaal (2000), *LWPR: An O(n) Algorithm for Incremental Real
+Time Learning in High Dimensional Space*. No explicit redistribution license
+has been identified for SARCOS. Its inclusion in this repository should not be
+interpreted as granting reuse or redistribution rights.
 
-The Naval Propulsion Plants dataset is licensed under the [Creative Commons Attribution 4.0 International license](https://creativecommons.org/licenses/by/4.0/). Users should cite Coraddu et al. (2014), *Condition Based Maintenance of Naval Propulsion Plants*, [UCI Machine Learning Repository](https://doi.org/10.24432/C5K31K).
+The Naval Propulsion Plants dataset is licensed under the
+[Creative Commons Attribution 4.0 International license](https://creativecommons.org/licenses/by/4.0/).
+Users should cite Coraddu et al. (2014), *Condition Based Maintenance of Naval
+Propulsion Plants*, [UCI Machine Learning Repository](https://doi.org/10.24432/C5K31K).
 
 ### Running the Experiments
 

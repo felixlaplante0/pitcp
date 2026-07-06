@@ -30,79 +30,82 @@ def gen_data(n):
     return x, np.random.randn(n) * std(x)
 
 
-# Set seed for reproducibility
-np.random.seed(42)
-torch.manual_seed(42)
 ROOT = Path(__file__).resolve().parents[1]
 N_RUNS = 10
 
-# Generate data
-X_cal, y_cal = gen_data(1000)
-Ns, qs = np.linspace(0, 5000, 6, dtype=int), np.linspace(0.01, 0.99, 98).tolist()
+def main():
+    """Runs convergence experiments and saves their figure."""
+    np.random.seed(42)
+    torch.manual_seed(42)
 
-xv = np.linspace(-1, 1, 500)[:, None]
+    X_cal, y_cal = gen_data(1000)
+    ns = np.linspace(0, 5000, 6, dtype=int)
+    quantiles = np.linspace(0.01, 0.99, 98).tolist()
+    xv = np.linspace(-1, 1, 500)[:, None]
 
-data = []
-for _ in range(N_RUNS):
-    for name in ["SOSPF", "GMM"]:
-        for n in Ns:
-            X_train, y_train = gen_data(n)
-            if name == "SOSPF":
-                model = zuko.flows.SOSPF(
-                    features=1, context=1, hidden_features=(32, 32)
+    data = []
+    for _ in range(N_RUNS):
+        for name in ["SOSPF", "GMM"]:
+            for n in ns:
+                X_train, y_train = gen_data(n)
+                if name == "SOSPF":
+                    model = zuko.flows.SOSPF(
+                        features=1, context=1, hidden_features=(32, 32)
+                    )
+                else:
+                    model = zuko.mixtures.GMM(
+                        features=1,
+                        context=1,
+                        components=5,
+                        hidden_features=(32, 32),
+                    )
+
+                if n == 0:
+                    for parameter in model.parameters():
+                        parameter.data.zero_()
+
+                optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+                pit = PITCP(model, optimizer, n_epochs=200, batch_size=512)
+                if n > 0:
+                    pit.fit(X_train[:, None], np.abs(y_train))
+                pit.conformalize(X_cal[:, None], np.abs(y_cal))
+
+                limits = pit.predict(xv, quantile=quantiles)
+                y_min, y_max = -limits, limits
+                coverage = norm.cdf(y_max / std(xv)) - norm.cdf(y_min / std(xv))
+                data.append(
+                    {
+                        "Model": name,
+                        "N": n,
+                        "MAE": np.abs(coverage - coverage.mean(0)).max(1).mean(),
+                    }
                 )
-            else:
-                model = zuko.mixtures.GMM(
-                    features=1, context=1, components=5, hidden_features=(32, 32)
-                )
 
-            if n == 0:
-                for p in model.parameters():
-                    p.data.zero_()
+    frame = pd.DataFrame(data)
+    _, ax = plt.subplots(figsize=(8, 5))
+    sns.lineplot(
+        data=frame,
+        x="N",
+        y="MAE",
+        hue="Model",
+        style="Model",
+        ax=ax,
+        markers={"SOSPF": "o", "GMM": "s"},
+        dashes=False,
+        palette={"SOSPF": "#2980B9", "GMM": "#C0392B"},
+        linewidth=2,
+        err_style="bars",
+    )
+    ax.set(
+        title="Convergence of the PIT-CP procedure",
+        xlabel="N (training samples)",
+        ylabel=r"$\mathbb{E}[\widehat{\Delta}(X)]$",
+    )
+    ax.legend()
+    plt.tight_layout()
+    plt.savefig(ROOT / "figures" / "convergence.pdf")
+    plt.show()
 
-            # PIT-CP
-            optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-            pit = PITCP(model, optimizer, n_epochs=200, batch_size=512)
-            if n > 0:
-                pit.fit(X_train[:, None], np.abs(y_train))
-            # Conformalize
-            pit.conformalize(X_cal[:, None], np.abs(y_cal))
 
-            lims = pit.predict(xv, quantile=qs)
-            y_min, y_max = -lims, lims
-
-            # Calculate coverage and L1 error
-            cov = norm.cdf(y_max / std(xv)) - norm.cdf(y_min / std(xv))
-            data.append(
-                {"Model": name, "N": n, "MAE": np.abs(cov - cov.mean(0)).max(1).mean()}
-            )
-
-df = pd.DataFrame(data)
-_, ax = plt.subplots(figsize=(8, 5))
-sns.lineplot(
-    data=df,
-    x="N",
-    y="MAE",
-    hue="Model",
-    style="Model",
-    ax=ax,
-    markers={"SOSPF": "o", "GMM": "s"},
-    dashes=False,
-    palette={"SOSPF": "#2980B9", "GMM": "#C0392B"},
-    linewidth=2,
-    err_style="bars",
-)
-
-ax.set(
-    title="Convergence of the PIT-CP procedure",
-    xlabel="N (training samples)",
-    ylabel=r"$\mathbb{E}[\widehat{\Delta}(X)]$",
-)
-ax.legend()
-
-# Save figure
-plt.tight_layout()
-plt.savefig(ROOT / "figures" / "convergence.pdf")
-plt.show()
-
-plt.show()
+if __name__ == "__main__":
+    main()

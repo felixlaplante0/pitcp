@@ -15,32 +15,9 @@ from utils.hpd import HPD
 from utils.scp import SCP
 from utils.volume import vol_base, vol_contra, vol_cqr, vol_hpd, vol_pitcp
 
-parser = argparse.ArgumentParser()
-dataset_group = parser.add_mutually_exclusive_group(required=True)
-dataset_group.add_argument("--sarcos", action="store_true")
-dataset_group.add_argument("--naval", action="store_true")
-args = parser.parse_args()
-dataset_name = "sarcos" if args.sarcos else "naval"
-n_features, n_targets = (21, 7) if args.sarcos else (16, 2)
-batch_size = 1024 if args.sarcos else 512
-
-# Set seed for reproducibility
-np.random.seed(42)
-torch.manual_seed(42)
 ROOT = Path(__file__).resolve().parents[1]
 N_RUNS = 10
-
-# Load data
-train_data = np.loadtxt(ROOT / "data" / f"{dataset_name}-train.csv", delimiter=",")
-X_train, y_train = train_data[:, :n_features], train_data[:, n_features:]
-
-valtest_data = np.loadtxt(
-    ROOT / "data" / f"{dataset_name}-valtest.csv", delimiter=","
-)
-X_valtest, y_valtest = valtest_data[:, :n_features], valtest_data[:, n_features:]
-
-# Load predictions
-y_pred = np.loadtxt(ROOT / "data" / f"{dataset_name}-pred.csv", delimiter=",")
+n_features = n_targets = batch_size = None
 
 
 def get_gap(covered, clusters):
@@ -192,29 +169,61 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
     return results
 
 
-results_by_q = defaultdict(list)
-for _ in range(N_RUNS):
-    idx = np.random.permutation(len(X_valtest))
-    X_valtest_perm = X_valtest[idx]
-    y_valtest_perm = y_valtest[idx]
-    y_pred_perm = y_pred[idx]
+def main():
+    """Runs real-data diagnostics and saves aggregated results."""
+    global n_features, n_targets, batch_size
 
-    res = run(X_train, y_train, X_valtest_perm, y_valtest_perm, y_pred_perm)
-    for q, df in res.items():
-        results_by_q[q].append(df)
+    parser = argparse.ArgumentParser()
+    dataset_group = parser.add_mutually_exclusive_group(required=True)
+    dataset_group.add_argument("--sarcos", action="store_true")
+    dataset_group.add_argument("--naval", action="store_true")
+    args = parser.parse_args()
+    dataset_name = "sarcos" if args.sarcos else "naval"
+    n_features, n_targets = (21, 7) if args.sarcos else (16, 2)
+    batch_size = 1024 if args.sarcos else 512
 
-# Aggregate and save results
-for q, dfs in results_by_q.items():
-    df_concat = pd.concat(dfs)
-    mean_df = df_concat.groupby(level=0).mean()
-    std_df = df_concat.groupby(level=0).std()
+    np.random.seed(42)
+    torch.manual_seed(42)
 
-    # Combine mean and std
-    final_df = pd.DataFrame()
-    for col in mean_df.columns:
-        final_df[f"{col} Mean"] = mean_df[col]
-        final_df[f"{col} Std"] = std_df[col]
+    train_data = np.loadtxt(
+        ROOT / "data" / f"{dataset_name}-train.csv", delimiter=","
+    )
+    X_train, y_train = train_data[:, :n_features], train_data[:, n_features:]
+    valtest_data = np.loadtxt(
+        ROOT / "data" / f"{dataset_name}-valtest.csv", delimiter=","
+    )
+    X_valtest = valtest_data[:, :n_features]
+    y_valtest = valtest_data[:, n_features:]
+    y_pred = np.loadtxt(ROOT / "data" / f"{dataset_name}-pred.csv", delimiter=",")
 
-    print(f"\nQuantile: {q}")
-    print(final_df)
-    final_df.to_string(ROOT / "figures" / f"{dataset_name}-quantile-{q}.txt")
+    results_by_q = defaultdict(list)
+    for _ in range(N_RUNS):
+        idx = np.random.permutation(len(X_valtest))
+        result = run(
+            X_train,
+            y_train,
+            X_valtest[idx],
+            y_valtest[idx],
+            y_pred[idx],
+        )
+        for quantile, frame in result.items():
+            results_by_q[quantile].append(frame)
+
+    for quantile, frames in results_by_q.items():
+        frame = pd.concat(frames)
+        mean_frame = frame.groupby(level=0).mean()
+        std_frame = frame.groupby(level=0).std()
+        final_frame = pd.DataFrame()
+        for column in mean_frame.columns:
+            final_frame[f"{column} Mean"] = mean_frame[column]
+            final_frame[f"{column} Std"] = std_frame[column]
+
+        print(f"\nQuantile: {quantile}")
+        print(final_frame)
+        final_frame.to_string(
+            ROOT / "figures" / f"{dataset_name}-quantile-{quantile}.txt"
+        )
+
+
+if __name__ == "__main__":
+    main()
