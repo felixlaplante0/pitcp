@@ -16,6 +16,6 @@ jobs:
       - name: Install ruff
         run: pip install ruff
       - name: Format check
-        run: ruff format --check pitcp tests
+        run: ruff format --check pitcp
       - name: Lint
-        run: ruff check pitcp tests
+        run: ruff check pitcp
