@@ -104,7 +104,7 @@ class PITCP(BaseEstimator, nn.Module):
             self.estimator_type_ = "mixture"
         else:
             raise NotImplementedError(
-                "Estimator must be either a `zuko.flows` or `zuko.mixtures` submodule."
+                "Estimator must be either a `zuko.flows.Flow` or `zuko.mixtures.GMM` subclass."
             )
 
     def _validate(
