@@ -34,6 +34,7 @@ def gen_data(n):
 ROOT = Path(__file__).resolve().parents[1]
 N_RUNS = 10
 TRAINING_SIZES = np.linspace(0, 5000, 6, dtype=int)
+CALIBRATION_SIZE = 1000
 QUANTILES = np.linspace(0.01, 0.99, 98).tolist()
 
 
@@ -41,7 +42,7 @@ def main():
     np.random.seed(42)
     torch.manual_seed(42)
 
-    X_cal, y_cal = gen_data(1000)
+    X_cal, y_cal = gen_data(CALIBRATION_SIZE)
     xv = np.linspace(-1, 1, 500)[:, None]
 
     data = []
