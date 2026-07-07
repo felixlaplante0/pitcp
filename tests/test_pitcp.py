@@ -64,7 +64,7 @@ def test_mixture():
     _exercise(estimator)
 
 
-def test_invalid_estimator_is_rejected_during_fit():
+def test_invalid_estimator():
     """Checks that estimator-family validation is deferred until fitting."""
     x_train, s_train, _, _ = _data()
     estimator = torch.nn.Linear(1, 1)
