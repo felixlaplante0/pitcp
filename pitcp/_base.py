@@ -1,11 +1,10 @@
 from collections.abc import Sequence
-from numbers import Integral
 from typing import Self, cast
 
 import numpy as np
 import torch
 from sklearn.base import BaseEstimator  # type: ignore
-from sklearn.utils._param_validation import Interval, validate_params  # type: ignore
+from sklearn.utils._param_validation import validate_params  # type: ignore
 from sklearn.utils.validation import (  # type: ignore
     check_is_fitted,  # type: ignore
     validate_data,  # type: ignore
@@ -50,8 +49,8 @@ class PITCP(BaseEstimator, nn.Module):
         batch_size (int | None): Batch size for data loading. None means full-batch
             training.
         verbose (bool | int): Whether to display a progress bar during training.
-        estimator_type_ (str): Either `flow` or `mixture`, set at initialization based
-            on the type of `estimator`.
+        estimator_type_ (str): Either `flow` or `mixture`, set during `fit` based on
+            the type of `estimator`.
         scores_ (torch.Tensor | None): Calibration PIT scores stored after calling
             `conformalize`.
     """
@@ -64,16 +63,6 @@ class PITCP(BaseEstimator, nn.Module):
     estimator_type_: str
     scores_: np.ndarray
 
-    @validate_params(
-        {
-            "estimator": [Flow, GMM],
-            "optimizer": [torch.optim.Optimizer],
-            "n_epochs": [Interval(Integral, 1, None, closed="left")],
-            "verbose": ["verbose"],
-            "batch_size": [Interval(Integral, 1, None, closed="left"), None],
-        },
-        prefer_skip_nested_validation=True,
-    )
     def __init__(
         self,
         estimator: Flow | GMM,
@@ -102,12 +91,14 @@ class PITCP(BaseEstimator, nn.Module):
         self.batch_size = batch_size
         self.verbose = verbose
 
+    def _validate_estimator(self) -> None:
+        """Validates the conditional density estimator family."""
         if is_flow(self.estimator):
             self.estimator_type_ = "flow"
         elif is_mixture(self.estimator):
             self.estimator_type_ = "mixture"
         else:
-            raise ValueError(
+            raise NotImplementedError(
                 "Estimator must be either a `zuko.flows` or `zuko.mixtures` submodule."
             )
 
@@ -215,6 +206,7 @@ class PITCP(BaseEstimator, nn.Module):
         Returns:
             Self: The fitted estimator.
         """
+        self._validate_estimator()
         X, s = self._validate(X, s)  # type: ignore
 
         dataset = torch.utils.data.TensorDataset(X, s)

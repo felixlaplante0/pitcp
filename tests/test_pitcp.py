@@ -33,6 +33,8 @@ def _exercise(estimator: torch.nn.Module):
     optimizer = torch.optim.Adam(estimator.parameters(), lr=1e-3)
     predictor = PITCP(estimator, optimizer, n_epochs=1, batch_size=8, verbose=False)
 
+    assert not hasattr(predictor, "estimator_type_")
+
     with pytest.raises(NotFittedError):
         predictor.predict(x_cal)
 
@@ -60,3 +62,19 @@ def test_mixture():
         features=1, context=1, components=2, hidden_features=(4, 4)
     )
     _exercise(estimator)
+
+
+def test_invalid_estimator_is_rejected_during_fit():
+    """Checks that estimator-family validation is deferred until fitting."""
+    x_train, s_train, _, _ = _data()
+    estimator = torch.nn.Linear(1, 1)
+    optimizer = torch.optim.Adam(estimator.parameters(), lr=1e-3)
+    predictor = PITCP(estimator, optimizer, n_epochs=1, batch_size=8, verbose=False)
+
+    assert not hasattr(predictor, "estimator_type_")
+
+    with pytest.raises(
+        NotImplementedError,
+        match="Estimator must be either a `zuko.flows` or `zuko.mixtures` submodule.",
+    ):
+        predictor.fit(x_train, s_train)
