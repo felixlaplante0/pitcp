@@ -91,8 +91,13 @@ class PITCP(BaseEstimator, nn.Module):
         self.batch_size = batch_size
         self.verbose = verbose
 
-    def _validate_estimator(self) -> None:
-        """Validates the conditional density estimator family."""
+    def _validate_estimator(self):
+        """Validates the conditional density estimator family.
+        
+        Raises:
+            NotImplementedError: If `estimator` is not a supported `zuko.flows.Flow` or
+                `zuko.mixtures.GMM` conditional density estimator.
+        """
         if is_flow(self.estimator):
             self.estimator_type_ = "flow"
         elif is_mixture(self.estimator):
