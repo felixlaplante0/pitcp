@@ -19,7 +19,7 @@
 ## 🚀 Installation
 
 ```bash
-pip install pitcp
+python -m pip install pitcp
 ```
 
 ## 🔧 Usage
