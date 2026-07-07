@@ -16,7 +16,7 @@ class CONTRA(BaseEstimator, nn.Module):
         self,
         estimator: Flow,
         *,
-        batch_size:  int | None = None,
+        batch_size: int | None = None,
     ):
         super().__init__()
         self.estimator = estimator

@@ -17,16 +17,25 @@ from utils.volume import vol_base, vol_contra, vol_cqr, vol_hpd, vol_pitcp
 
 ROOT = Path(__file__).resolve().parents[1]
 N_RUNS = 10
-n_features = n_targets = batch_size = None
+QUANTILES = (0.6, 0.7, 0.8, 0.9)
 
 
-def get_gap(covered, clusters):
+def get_covgap(covered, clusters):
     return np.max(
         [covered[clusters == k].mean() for k in np.unique(clusters)]
     ) - np.min([covered[clusters == k].mean() for k in np.unique(clusters)])
 
 
-def run(X_train, y_train, X_valtest, y_valtest, y_pred):
+def run(
+    X_train,
+    y_train,
+    X_valtest,
+    y_valtest,
+    y_pred,
+    n_features,
+    n_targets,
+    batch_size,
+):
     half = len(X_valtest) // 2
     three_quarters = half + (len(X_valtest) - half) // 2
 
@@ -92,7 +101,7 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
     clusters = KMeans(n_clusters=10, random_state=42).fit_predict(X_test_scaled)
 
     results = {}
-    for q in [0.6, 0.7, 0.8, 0.9]:
+    for q in QUANTILES:
         results_q = {}
         # SCP
         scp = SCP(alpha=1 - q).conformalize(X_test_scaled, scores_cal_scaled)
@@ -101,7 +110,7 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
 
         results_q["SCP"] = {
             "Marginal Coverage": covered_base.mean(),
-            "Gap": get_gap(covered_base, clusters),
+            "CovGap": get_covgap(covered_base, clusters),
             "Vol Q1": vol_base_q1,
             "Vol Median": vol_base_q2,
             "Vol Q3": vol_base_q3,
@@ -117,7 +126,7 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
 
         results_q["CQR"] = {
             "Marginal Coverage": covered_cqr.mean(),
-            "Gap": get_gap(covered_cqr, clusters),
+            "CovGap": get_covgap(covered_cqr, clusters),
             "Vol Q1": vol_cqr_q1,
             "Vol Median": vol_cqr_q2,
             "Vol Q3": vol_cqr_q3,
@@ -128,7 +137,7 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
         vol_hpd_q1, vol_hpd_q2, vol_hpd_q3 = vol_hpd(hpd, X_test_scaled, y_scaler, q)
         results_q["HPD"] = {
             "Marginal Coverage": covered_hpd.mean(),
-            "Gap": get_gap(covered_hpd, clusters),
+            "CovGap": get_covgap(covered_hpd, clusters),
             "Vol Q1": vol_hpd_q1,
             "Vol Median": vol_hpd_q2,
             "Vol Q3": vol_hpd_q3,
@@ -143,7 +152,7 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
         )
         results_q["CONTRA"] = {
             "Marginal Coverage": covered_contra.mean(),
-            "Gap": get_gap(covered_contra, clusters),
+            "CovGap": get_covgap(covered_contra, clusters),
             "Vol Q1": vol_contra_q1,
             "Vol Median": vol_contra_q2,
             "Vol Q3": vol_contra_q3,
@@ -159,7 +168,7 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
 
         results_q["PIT-CP"] = {
             "Marginal Coverage": covered_pit.mean(),
-            "Gap": get_gap(covered_pit, clusters),
+            "CovGap": get_covgap(covered_pit, clusters),
             "Vol Q1": vol_pit_q1,
             "Vol Median": vol_pit_q2,
             "Vol Q3": vol_pit_q3,
@@ -170,9 +179,6 @@ def run(X_train, y_train, X_valtest, y_valtest, y_pred):
 
 
 def main():
-    """Runs real-data diagnostics and saves aggregated results."""
-    global n_features, n_targets, batch_size
-
     parser = argparse.ArgumentParser()
     dataset_group = parser.add_mutually_exclusive_group(required=True)
     dataset_group.add_argument("--sarcos", action="store_true")
@@ -185,9 +191,7 @@ def main():
     np.random.seed(42)
     torch.manual_seed(42)
 
-    train_data = np.loadtxt(
-        ROOT / "data" / f"{dataset_name}-train.csv", delimiter=","
-    )
+    train_data = np.loadtxt(ROOT / "data" / f"{dataset_name}-train.csv", delimiter=",")
     X_train, y_train = train_data[:, :n_features], train_data[:, n_features:]
     valtest_data = np.loadtxt(
         ROOT / "data" / f"{dataset_name}-valtest.csv", delimiter=","
@@ -205,6 +209,9 @@ def main():
             X_valtest[idx],
             y_valtest[idx],
             y_pred[idx],
+            n_features,
+            n_targets,
+            batch_size,
         )
         for quantile, frame in result.items():
             results_by_q[quantile].append(frame)

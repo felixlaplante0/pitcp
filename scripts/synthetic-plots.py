@@ -33,10 +33,11 @@ def gen_data(n):
 
 
 ROOT = Path(__file__).resolve().parents[1]
-X_train = y_train = X_cal = y_cal = X_test = y_test = None
+SAMPLE_SIZES = (5000, 1000, 5000)
+QUANTILES = (0.7, 0.8, 0.9)
 
 
-def run(score_fn, inv_score_fn, q):
+def run(score_fn, inv_score_fn, q, X_train, y_train, X_cal, y_cal, X_test, y_test):
     # CQR
     cqr = CQR(alpha=1 - q).fit(X_train[:, None], y_train)
     cqr.conformalize(X_cal[:, None], y_cal)
@@ -140,21 +141,27 @@ def inv_score_y(x, s):
 
 
 def main():
-    """Runs synthetic experiments and saves their figures."""
-    global X_train, y_train, X_cal, y_cal, X_test, y_test
-
     np.random.seed(42)
     torch.manual_seed(42)
     (X_train, y_train), (X_cal, y_cal), (X_test, y_test) = [
-        gen_data(n) for n in (5000, 1000, 5000)
+        gen_data(n) for n in SAMPLE_SIZES
     ]
 
-    for score_fn, inv_score_fn, quantile in [
-        (score_abs, inv_score_abs, 0.7),
-        (score_hpd, inv_score_hpd, 0.8),
-        (score_y, inv_score_y, 0.9),
-    ]:
-        run(score_fn, inv_score_fn, quantile)
+    score_fns = (score_abs, score_hpd, score_y)
+    inv_score_fns = (inv_score_abs, inv_score_hpd, inv_score_y)
+
+    for score_fn, inv_score_fn, quantile in zip(score_fns, inv_score_fns, QUANTILES):
+        run(
+            score_fn,
+            inv_score_fn,
+            quantile,
+            X_train,
+            y_train,
+            X_cal,
+            y_cal,
+            X_test,
+            y_test,
+        )
 
 
 if __name__ == "__main__":

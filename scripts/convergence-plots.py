@@ -21,6 +21,7 @@ plt.rcParams.update(
 )
 
 
+# Data generation helpers
 def std(x):
     return np.abs(1 - 2 * x**2) + 0.1
 
@@ -32,21 +33,21 @@ def gen_data(n):
 
 ROOT = Path(__file__).resolve().parents[1]
 N_RUNS = 10
+TRAINING_SIZES = np.linspace(0, 5000, 6, dtype=int)
+QUANTILES = np.linspace(0.01, 0.99, 98).tolist()
+
 
 def main():
-    """Runs convergence experiments and saves their figure."""
     np.random.seed(42)
     torch.manual_seed(42)
 
     X_cal, y_cal = gen_data(1000)
-    ns = np.linspace(0, 5000, 6, dtype=int)
-    quantiles = np.linspace(0.01, 0.99, 98).tolist()
     xv = np.linspace(-1, 1, 500)[:, None]
 
     data = []
     for _ in range(N_RUNS):
         for name in ["SOSPF", "GMM"]:
-            for n in ns:
+            for n in TRAINING_SIZES:
                 X_train, y_train = gen_data(n)
                 if name == "SOSPF":
                     model = zuko.flows.SOSPF(
@@ -70,7 +71,7 @@ def main():
                     pit.fit(X_train[:, None], np.abs(y_train))
                 pit.conformalize(X_cal[:, None], np.abs(y_cal))
 
-                limits = pit.predict(xv, quantile=quantiles)
+                limits = pit.predict(xv, quantile=QUANTILES)
                 y_min, y_max = -limits, limits
                 coverage = norm.cdf(y_max / std(xv)) - norm.cdf(y_min / std(xv))
                 data.append(
