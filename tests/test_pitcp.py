@@ -7,7 +7,7 @@ from sklearn.exceptions import NotFittedError
 from pitcp import PITCP
 
 
-def _datasets():
+def _data():
     """Creates deterministic training and calibration datasets.
 
     Returns:
@@ -29,7 +29,7 @@ def _exercise(estimator: torch.nn.Module):
     Args:
         estimator (torch.nn.Module): Conditional density estimator to exercise.
     """
-    x_train, s_train, x_cal, s_cal = _datasets()
+    x_train, s_train, x_cal, s_cal = _data()
     optimizer = torch.optim.Adam(estimator.parameters(), lr=1e-3)
     predictor = PITCP(estimator, optimizer, n_epochs=1, batch_size=8, verbose=False)
 
