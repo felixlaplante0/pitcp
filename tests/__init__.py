@@ -1,1 +1,1 @@
-"""Tests for pitcp."""
+"""Tests for the otlingam pacakge."""
