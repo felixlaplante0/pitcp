@@ -93,10 +93,10 @@ class PITCP(BaseEstimator, nn.Module):
 
     def _validate_estimator(self):
         """Validates the conditional density estimator family.
-        
+
         Raises:
-            NotImplementedError: If `estimator` is not a supported `zuko.flows.Flow`
-                or `zuko.mixtures.GMM` conditional density estimator.
+            NotImplementedError: If `estimator` is not a supported `zuko.flows.Flow` or
+                `zuko.mixtures.GMM` conditional density estimator.
         """
         if is_flow(self.estimator):
             self.estimator_type_ = "flow"
@@ -104,7 +104,8 @@ class PITCP(BaseEstimator, nn.Module):
             self.estimator_type_ = "mixture"
         else:
             raise NotImplementedError(
-                "Estimator must be either a `zuko.flows.Flow` or `zuko.mixtures.GMM` subclass."
+                "Estimator must be either a `zuko.flows.Flow` or `zuko.mixtures.GMM` "
+                "subclass."
             )
 
     def _validate(
