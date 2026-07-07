@@ -75,6 +75,9 @@ def test_invalid_estimator():
 
     with pytest.raises(
         NotImplementedError,
-        match="Estimator must be either a `zuko.flows` or `zuko.mixtures` submodule.",
+        match=(
+            "Estimator must be either a `zuko.flows.Flow` or `zuko.mixtures.GMM` "
+            "subclass."
+        ),
     ):
         predictor.fit(x_train, s_train)
