@@ -48,13 +48,13 @@ def _exercise(estimator: torch.nn.Module):
     assert covered.dtype == np.dtype(bool)
 
 
-def test_flow_workflow():
+def test_flow():
     """Runs the public workflow with a conditional normalizing flow."""
     estimator = zuko.flows.SOSPF(features=1, context=1, hidden_features=(4, 4))
     _exercise(estimator)
 
 
-def test_mixture_workflow():
+def test_mixture():
     """Runs the public workflow with a conditional Gaussian mixture."""
     estimator = zuko.mixtures.GMM(
         features=1, context=1, components=2, hidden_features=(4, 4)
