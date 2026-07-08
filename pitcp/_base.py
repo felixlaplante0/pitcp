@@ -1,10 +1,11 @@
 from collections.abc import Sequence
+from numbers import Integral
 from typing import Self, cast
 
 import numpy as np
 import torch
 from sklearn.base import BaseEstimator  # type: ignore
-from sklearn.utils._param_validation import validate_params  # type: ignore
+from sklearn.utils._param_validation import Interval, validate_params  # type: ignore
 from sklearn.utils.validation import (  # type: ignore
     check_is_fitted,  # type: ignore
     validate_data,  # type: ignore
@@ -40,6 +41,7 @@ class PITCP(BaseEstimator, nn.Module):
         - `n_epochs`: Number of full passes over the training data.
         - `batch_size`: Mini-batch size used during both Train and inference.
         - `verbose`: Whether to display a `tqdm` progress bar during `fit`.
+        - `random_state`: Seed used to shuffle mini-batches during `fit`.
 
     Attributes:
         estimator (Flow | GMM): Conditional density estimator from
@@ -49,10 +51,24 @@ class PITCP(BaseEstimator, nn.Module):
         batch_size (int | None): Batch size for data loading. None means full-batch
             training.
         verbose (bool | int): Whether to display a progress bar during training.
+        random_state (int | None): Seed used to shuffle mini-batches during `fit`.
         estimator_type_ (str): Either `flow` or `mixture`, set during `fit` based on
             the type of `estimator`.
         scores_ (torch.Tensor | None): Calibration PIT scores stored after calling
             `conformalize`.
+
+    Examples:
+        >>> import torch
+        >>> import zuko
+        >>> from pitcp import PITCP
+        >>> X = torch.linspace(-1.0, 1.0, 32).reshape(-1, 1)
+        >>> s = torch.abs(torch.sin(3.0 * X)) + 0.1
+        >>> estimator = zuko.flows.NSF(features=1, context=1, bins=4)
+        >>> optimizer = torch.optim.Adam(estimator.parameters(), lr=1e-2)
+        >>> model = PITCP(estimator, optimizer, n_epochs=1, verbose=False)
+        >>> model.fit(X, s)
+        >>> model.conformalize(X, s)
+        >>> model.predict(X, quantile=0.9)
     """
 
     estimator: Flow | GMM
@@ -60,9 +76,21 @@ class PITCP(BaseEstimator, nn.Module):
     n_epochs: int
     batch_size: int | None
     verbose: bool | int
+    random_state: int | None
     estimator_type_: str
     scores_: np.ndarray
 
+    @validate_params(
+        {
+            "estimator": [Flow, GMM],
+            "optimizer": [torch.optim.Optimizer],
+            "n_epochs": [Interval(Integral, 1, None, closed="left")],
+            "batch_size": [Interval(Integral, 1, None, closed="left"), None],
+            "verbose": ["verbose"],
+            "random_state": ["random_state"],
+        },
+        prefer_skip_nested_validation=True,
+    )
     def __init__(
         self,
         estimator: Flow | GMM,
@@ -71,6 +99,7 @@ class PITCP(BaseEstimator, nn.Module):
         n_epochs: int = 10,
         batch_size: int | None = None,
         verbose: bool | int = True,
+        random_state: int | None = None,
     ):
         """Initializes the PITCP instance.
 
@@ -82,6 +111,8 @@ class PITCP(BaseEstimator, nn.Module):
                 None.
             verbose (bool | int, optional): Whether to show a Train progress bar.
                 Defaults to True.
+            random_state (int | None, optional): Seed used to shuffle mini-batches
+                during `fit`. Defaults to None.
         """
         super().__init__()
 
@@ -90,6 +121,7 @@ class PITCP(BaseEstimator, nn.Module):
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.verbose = verbose
+        self.random_state = random_state
 
     def _validate_estimator(self):
         """Validates the conditional density estimator family.
@@ -216,10 +248,16 @@ class PITCP(BaseEstimator, nn.Module):
         X, s = self._validate(X, s)  # type: ignore
 
         dataset = torch.utils.data.TensorDataset(X, s)
+        generator = (
+            None
+            if self.random_state is None
+            else torch.Generator().manual_seed(self.random_state)
+        )
         loader = torch.utils.data.DataLoader(
             dataset,
             batch_size=self.batch_size or len(dataset),
             shuffle=True,
+            generator=generator,
         )
 
         self.train()

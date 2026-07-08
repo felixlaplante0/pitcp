@@ -23,7 +23,7 @@ def _data():
     return x_train, s_train, x_cal, s_cal
 
 
-def _exercise(estimator: torch.nn.Module):
+def _exercise(estimator: torch.nn.Module, random_state: int | None = None):
     """Runs fitting, calibration, and prediction for one estimator family.
 
     Args:
@@ -31,8 +31,16 @@ def _exercise(estimator: torch.nn.Module):
     """
     x_train, s_train, x_cal, s_cal = _data()
     optimizer = torch.optim.Adam(estimator.parameters(), lr=1e-3)
-    predictor = PITCP(estimator, optimizer, n_epochs=1, batch_size=8, verbose=False)
+    predictor = PITCP(
+        estimator,
+        optimizer,
+        n_epochs=1,
+        batch_size=8,
+        verbose=False,
+        random_state=random_state,
+    )
 
+    assert predictor.get_params()["random_state"] == random_state
     assert not hasattr(predictor, "estimator_type_")
 
     with pytest.raises(NotFittedError):
@@ -50,10 +58,11 @@ def _exercise(estimator: torch.nn.Module):
     assert covered.dtype == np.dtype(bool)
 
 
-def test_flow():
+@pytest.mark.parametrize("random_state", [None, 42])
+def test_flow(random_state):
     """Runs the public workflow with a conditional normalizing flow."""
     estimator = zuko.flows.SOSPF(features=1, context=1, hidden_features=(4, 4))
-    _exercise(estimator)
+    _exercise(estimator, random_state)
 
 
 def test_mixture():
@@ -75,9 +84,6 @@ def test_invalid_estimator():
 
     with pytest.raises(
         NotImplementedError,
-        match=(
-            "Estimator must be either a `zuko.flows.Flow` or `zuko.mixtures.GMM` "
-            "subclass."
-        ),
+        match="Estimator must be either",
     ):
         predictor.fit(x_train, s_train)
