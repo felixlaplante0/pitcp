@@ -123,23 +123,6 @@ class PITCP(BaseEstimator, nn.Module):
         self.verbose = verbose
         self.random_state = random_state
 
-    def _validate_estimator(self):
-        """Validates the conditional density estimator family.
-
-        Raises:
-            NotImplementedError: If `estimator` is not a supported `zuko.flows.Flow` or
-                `zuko.mixtures.GMM` conditional density estimator.
-        """
-        if is_flow(self.estimator):
-            self.estimator_type_ = "flow"
-        elif is_mixture(self.estimator):
-            self.estimator_type_ = "mixture"
-        else:
-            raise NotImplementedError(
-                "Estimator must be either a `zuko.flows.Flow` or `zuko.mixtures.GMM` "
-                "subclass."
-            )
-
     def _validate(
         self,
         X: np.typing.ArrayLike,
@@ -244,7 +227,9 @@ class PITCP(BaseEstimator, nn.Module):
         Returns:
             Self: The fitted estimator.
         """
-        self._validate_estimator()
+        self.estimator_type_ = (
+            "flow" if issubclass(type(self.estimator), Flow) else "mixture"
+        )
         X, s = self._validate(X, s)  # type: ignore
 
         dataset = torch.utils.data.TensorDataset(X, s)
