@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from numbers import Integral
-from typing import Self, cast
+from typing import ClassVar, Self, cast
 
 import numpy as np
 import torch
@@ -80,17 +80,15 @@ class PITCP(BaseEstimator, nn.Module):
     estimator_type_: str
     scores_: np.ndarray
 
-    @validate_params(
-        {
-            "estimator": [Flow, GMM],
-            "optimizer": [torch.optim.Optimizer],
-            "n_epochs": [Interval(Integral, 1, None, closed="left")],
-            "batch_size": [Interval(Integral, 1, None, closed="left"), None],
-            "verbose": ["verbose"],
-            "random_state": ["random_state"],
-        },
-        prefer_skip_nested_validation=True,
-    )
+    _parameter_constraints: ClassVar[dict] = {
+        "estimator": [Flow, GMM],
+        "optimizer": [torch.optim.Optimizer],
+        "n_epochs": [Interval(Integral, 1, None, closed="left")],
+        "batch_size": [Interval(Integral, 1, None, closed="left"), None],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         estimator: Flow | GMM,
@@ -227,6 +225,7 @@ class PITCP(BaseEstimator, nn.Module):
         Returns:
             Self: The fitted estimator.
         """
+        self._validate_params()
         self.estimator_type_ = (
             "flow" if issubclass(type(self.estimator), Flow) else "mixture"
         )
