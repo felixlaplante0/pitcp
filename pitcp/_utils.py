@@ -1,8 +1,6 @@
 import numpy as np
 import torch
 from torch.distributions import Normal
-from zuko.flows import Flow  # type: ignore
-from zuko.mixtures import GMM  # type: ignore
 
 
 def correct_mixture(gmm: GMM, x: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
