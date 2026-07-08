@@ -15,7 +15,7 @@ from tqdm import trange
 from zuko.flows import Flow  # type: ignore
 from zuko.mixtures import GMM  # type: ignore
 
-from ._utils import correct_mixture, invert_mixture, is_flow, is_mixture, to_1d
+from ._utils import correct_mixture, invert_mixture, to_1d
 
 
 class PITCP(BaseEstimator, nn.Module):
