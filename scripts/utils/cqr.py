@@ -6,13 +6,23 @@ from catboost import CatBoostRegressor
 
 class CQR:
     alpha: float
+    gamma: float
     model: CatBoostRegressor
+    side_: str
     threshold_: float
 
-    def __init__(self, alpha: float, random_state=42):
+    def __init__(self, alpha: float, gamma: float = 1 / 2, random_state: int = 42):
         self.alpha = alpha
+        self.gamma = gamma
+        self.side_ = "upper" if gamma == 0 else "two-sided"
+        if self.side_ == "upper":
+            loss_function = f"Quantile:alpha={1 - alpha}"
+        else:
+            lo_alpha = alpha * gamma
+            hi_alpha = 1 - alpha * (1 - gamma)
+            loss_function = f"MultiQuantile:alpha={lo_alpha},{hi_alpha}"
         self.model = CatBoostRegressor(
-            loss_function=f"MultiQuantile:alpha={alpha / 2},{1 - alpha / 2}",
+            loss_function=loss_function,
             verbose=False,
             random_state=random_state,
         )
@@ -23,7 +33,9 @@ class CQR:
         return self
 
     def _predict_raw(self, X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        preds = self.model.predict(X)
+        preds = np.asarray(self.model.predict(X))
+        if self.side_ == "upper":
+            return np.full_like(preds, -np.inf), preds
         return preds[:, 0], preds[:, 1]
 
     def conformalize(self, X: np.ndarray, y: np.ndarray) -> Self:
@@ -47,15 +59,20 @@ class CQR:
 
 class CQRHyperRectangle:
     alpha: float
+    gamma: float
     models: list[CQR]
     threshold_: float
 
-    def __init__(self, alpha: float):
+    def __init__(self, alpha: float, gamma: float = 1 / 2):
         self.alpha: float = alpha
+        self.gamma: float = gamma
         self.models: list[CQR] = []
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> Self:
-        self.models = [CQR(alpha=self.alpha).fit(X, y[:, j]) for j in range(y.shape[1])]
+        self.models = [
+            CQR(alpha=self.alpha, gamma=self.gamma).fit(X, y[:, j])
+            for j in range(y.shape[1])
+        ]
         return self
 
     def conformalize(self, X: np.ndarray, y: np.ndarray) -> Self:
