@@ -1,11 +1,20 @@
 cff-version: 1.2.0
-message: "If you use PIT-CP, please cite this paper."
-title: "A Post-Processing Conformal Prediction Approach for Conditional Coverage via Pivotal Scores"
-type: article
+message: "If you use PIT-CP, please cite the paper below."
+title: "PIT-CP"
+type: software
 authors:
   - family-names: "Laplante"
     given-names: "Félix"
-doi: "10.48550/arXiv.2605.25852"
 date-released: 2026-05-25
 repository-code: "https://github.com/felixlaplante0/pitcp"
-url: "https://arxiv.org/abs/2605.25852"
+url: "https://github.com/felixlaplante0/pitcp"
+
+preferred-citation:
+  type: article
+  title: "A Post-Processing Conformal Prediction Approach for Conditional Coverage via Pivotal Scores"
+  authors:
+    - family-names: "Laplante"
+      given-names: "Félix"
+  doi: "10.48550/arXiv.2605.25852"
+  date-released: 2026-05-25
+  url: "https://arxiv.org/abs/2605.25852"
