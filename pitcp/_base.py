@@ -27,35 +27,35 @@ class PITCP(BaseEstimator, nn.Module):
     conditional CDF to map raw scores to PIT values. Conformal coverage guarantees are
     obtained by comparing test PIT values against a calibration quantile.
 
-    The estimator must be a `zuko` subclass, coming from either `zuko.flows.Flow` (a
-    normalizing flow) or `zuko.mixtures.GMM` (a mixture density network). The class
+    The estimator must be a ``zuko`` subclass, coming from either ``zuko.flows.Flow`` (a
+    normalizing flow) or ``zuko.mixtures.GMM`` (a mixture density network). The class
     internally detects which family is used and applies the appropriate CDF computation.
 
     Density estimation settings:
-        - `estimator`: A `zuko` lazy distribution instance conditioned on features, used
-          to model the score distribution. Must be from `zuko.flows` or `zuko.mixtures`.
-        - `optimizer`: Optimizer used to train the density estimator via maximum
+        - ``estimator``: A ``zuko`` lazy distribution instance conditioned on features, used
+          to model the score distribution. Must be from ``zuko.flows`` or ``zuko.mixtures``.
+        - ``optimizer``: Optimizer used to train the density estimator via maximum
           likelihood (negative log-likelihood/forward KL divergence minimization).
 
     Training settings:
-        - `n_epochs`: Number of full passes over the training data.
-        - `batch_size`: Mini-batch size used during both Train and inference.
-        - `verbose`: Whether to display a `tqdm` progress bar during `fit`.
-        - `random_state`: Seed used to shuffle mini-batches during `fit`.
+        - ``n_epochs``: Number of full passes over the training data.
+        - ``batch_size``: Mini-batch size used during both Train and inference.
+        - ``verbose``: Whether to display a ``tqdm`` progress bar during ``fit``.
+        - ``random_state``: Seed used to shuffle mini-batches during ``fit``.
 
     Attributes:
         estimator (Flow | GMM): Conditional density estimator from
-            `zuko.flows` or `zuko.mixtures`.
+            ``zuko.flows`` or ``zuko.mixtures``.
         optimizer (torch.optim.Optimizer): Optimizer for training the estimator.
         n_epochs (int): Number of training epochs.
         batch_size (int | None): Batch size for data loading. None means full-batch
             training.
         verbose (bool | int): Whether to display a progress bar during training.
-        random_state (int | None): Seed used to shuffle mini-batches during `fit`.
-        estimator_type_ (str): Either `flow` or `mixture`, set during `fit` based on
-            the type of `estimator`.
+        random_state (int | None): Seed used to shuffle mini-batches during ``fit``.
+        estimator_type_ (str): Either ``flow`` or ``mixture``, set during ``fit`` based on
+            the type of ``estimator``.
         scores_ (torch.Tensor | None): Calibration PIT scores stored after calling
-            `conformalize`.
+            ``conformalize``.
 
     Examples:
         >>> import torch
@@ -110,7 +110,7 @@ class PITCP(BaseEstimator, nn.Module):
             verbose (bool | int, optional): Whether to show a Train progress bar.
                 Defaults to True.
             random_state (int | None, optional): Seed used to shuffle mini-batches
-                during `fit`. Defaults to None.
+                during ``fit``. Defaults to None.
         """
         super().__init__()
 

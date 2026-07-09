@@ -9,10 +9,10 @@
 ## ✨ Features
 
 - **PIT Conformal Prediction**: Maps base nonconformity scores through a learned conditional CDF, producing asymptotically exact conditional coverage.
-- **Model-agnostic**: Works with any callable nonconformity score `s(x, y)`, including distance, residual, or likelihood-based scores.
+- **Model-agnostic**: Works with any callable nonconformity score ``s(x, y)``, including distance, residual, or likelihood-based scores.
 - **Flexible Density Estimation**: Supports normalizing flows and mixture density networks from the [zuko](https://github.com/probabilists/zuko) library.
 - **Marginal Coverage Guarantee**: Provably valid conformal coverage at any target level via finite-sample calibration.
-- **scikit-learn**: Native `BaseEstimator` integration with a familiar `fit` / `conformalize` / `predict` API.
+- **scikit-learn**: Native ``BaseEstimator`` integration with a familiar ``fit`` / ``conformalize`` / ``predict`` API.
 
 ---
 
@@ -95,8 +95,8 @@ Clone the repository, create and activate a virtual environment, and install the
 python -m pip install -r scripts/requirements.txt
 ```
 
-This installs the frozen `pitcp` release from PyPI together with the
-experimental dependencies recorded in `scripts/requirements.txt`.
+This installs the frozen ``pitcp`` release from PyPI together with the
+experimental dependencies recorded in ``scripts/requirements.txt``.
 Do not subsequently install the repository in editable mode when reproducing
 the paper, because that would replace the frozen PyPI release with the local
 source checkout.
@@ -111,7 +111,7 @@ The editable installation makes local source changes immediately available witho
 
 ### Preparing the Real Data
 
-The repository contains the raw SARCOS (`data/sarcos_inv.mat`) and Naval Propulsion Plants (`data/naval.txt`) datasets. To regenerate the training, validation-test, and prediction CSV files, install the TabPFN client, set the `TABPFN_ACCESS_TOKEN` environment variable to a valid access token, and run both dataset modes:
+The repository contains the raw SARCOS (``data/sarcos_inv.mat``) and Naval Propulsion Plants (``data/naval.txt``) datasets. To regenerate the training, validation-test, and prediction CSV files, install the TabPFN client, set the ``TABPFN_ACCESS_TOKEN`` environment variable to a valid access token, and run both dataset modes:
 
 ```bash
 python -m pip install tabpfn-client
@@ -136,15 +136,15 @@ python data/predict.py --naval
 The token remains in the current terminal session and is not written to the
 repository.
 
-These commands write `{dataset}-train.csv`, `{dataset}-valtest.csv`, and `{dataset}-pred.csv` to `data/`. The generated CSV files are already included, so this step can be skipped unless the predictions must be regenerated.
+These commands write ``{dataset}-train.csv``, ``{dataset}-valtest.csv``, and ``{dataset}-pred.csv`` to ``data/``. The generated CSV files are already included, so this step can be skipped unless the predictions must be regenerated.
 
 The paper experiments use Python 3.13 and the dependencies in
-`scripts/requirements.txt`. Verify downloaded and generated data against
-`data/SHA256SUMS` before running the experiments. The committed prediction
+``scripts/requirements.txt``. Verify downloaded and generated data against
+``data/SHA256SUMS`` before running the experiments. The committed prediction
 files are the canonical reproduction artifacts because results returned by the
 remote TabPFN service may change independently of this repository.
 
-On systems with `sha256sum`, verify the artifacts with:
+On systems with ``sha256sum``, verify the artifacts with:
 
 ```bash
 cd data
@@ -177,12 +177,12 @@ python scripts/real-data-diagnostics.py --sarcos
 python scripts/real-data-diagnostics.py --naval
 ```
 
-The scripts resolve data and output paths from their file locations, so they do not depend on the current working directory. Figures and diagnostic tables are written to `figures/`.
+The scripts resolve data and output paths from their file locations, so they do not depend on the current working directory. Figures and diagnostic tables are written to ``figures/``.
 
 ### Script Descriptions
 
 | Script | Description |
 | :--- | :--- |
-| `convergence-plots.py` | Evaluates the convergence of the PIT-CP procedure across different training sample sizes using various density estimators (SOSPF, GMM). |
-| `real-data-diagnostics.py` | Benchmarks PIT-CP against other conformal prediction methods (SCP, CQR, HPD, CONTRA) on real-world datasets, calculating coverage gaps and prediction interval volumes. |
-| `synthetic-plots.py` | Compares the conformal regions and conditional coverage of PIT-CP, CQR, and SCP on synthetic heteroscedastic data. |
+| ``convergence-plots.py`` | Evaluates the convergence of the PIT-CP procedure across different training sample sizes using various density estimators (SOSPF, GMM). |
+| ``real-data-diagnostics.py`` | Benchmarks PIT-CP against other conformal prediction methods (SCP, CQR, HPD, CONTRA) on real-world datasets, calculating coverage gaps and prediction interval volumes. |
+| ``synthetic-plots.py`` | Compares the conformal regions and conditional coverage of PIT-CP, CQR, and SCP on synthetic heteroscedastic data. |
