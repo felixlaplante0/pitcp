@@ -45,8 +45,8 @@ class PITCP(BaseEstimator, nn.Module):
         - ``random_state``: Seed used to shuffle mini-batches during ``fit``.
 
     Attributes:
-        estimator (Flow | GMM): Conditional density estimator from
-            ``zuko.flows`` or ``zuko.mixtures``.
+        estimator (Flow | GMM): Conditional density estimator from ``zuko.flows`` or
+            ``zuko.mixtures``.
         optimizer (torch.optim.Optimizer): Optimizer for training the estimator.
         n_epochs (int): Number of training epochs.
         batch_size (int | None): Batch size for data loading. None means full-batch
