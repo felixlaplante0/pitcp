@@ -32,8 +32,9 @@ class PITCP(BaseEstimator, nn.Module):
     internally detects which family is used and applies the appropriate CDF computation.
 
     Density estimation settings:
-        - ``estimator``: A ``zuko`` lazy distribution instance conditioned on features, used
-          to model the score distribution. Must be from ``zuko.flows`` or ``zuko.mixtures``.
+        - ``estimator``: A ``zuko`` lazy distribution instance conditioned on features,
+          used to model the score distribution. Must be from ``zuko.flows`` or
+          ``zuko.mixtures``.
         - ``optimizer``: Optimizer used to train the density estimator via maximum
           likelihood (negative log-likelihood/forward KL divergence minimization).
 
@@ -52,8 +53,8 @@ class PITCP(BaseEstimator, nn.Module):
             training.
         verbose (bool | int): Whether to display a progress bar during training.
         random_state (int | None): Seed used to shuffle mini-batches during ``fit``.
-        estimator_type_ (str): Either ``flow`` or ``mixture``, set during ``fit`` based on
-            the type of ``estimator``.
+        estimator_type_ (str): Either ``flow`` or ``mixture``, set during ``fit`` based
+            on the type of ``estimator``.
         scores_ (torch.Tensor | None): Calibration PIT scores stored after calling
             ``conformalize``.
 
