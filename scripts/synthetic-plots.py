@@ -8,8 +8,8 @@ from matplotlib.lines import Line2D
 from pitcp import PITCP
 from scipy.stats import norm
 
-from utils.cqr import CQR
-from utils.data import (
+from utils._cqr import CQR
+from utils._data import (
     gen_data,
     inv_score_abs,
     inv_score_hpd,
@@ -22,7 +22,7 @@ from utils.data import (
     score_y,
     std,
 )
-from utils.scp import SCP
+from utils._scp import SCP
 
 # Set plot parameters
 plt.rcParams.update(

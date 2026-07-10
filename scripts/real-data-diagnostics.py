@@ -10,11 +10,11 @@ from pitcp import PITCP
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
-from utils.contra import CONTRA
-from utils.cqr import CQRHyperRectangle
-from utils.hpd import HPD
-from utils.scp import SCP
-from utils.volume import vol_base, vol_contra, vol_cqr, vol_hpd, vol_pitcp
+from utils._contra import CONTRA
+from utils._cqr import CQRHyperRectangle
+from utils._hpd import HPD
+from utils._scp import SCP
+from utils._volume import vol_base, vol_contra, vol_cqr, vol_hpd, vol_pitcp
 
 ROOT = Path(__file__).resolve().parents[1]
 N_RUNS = 10

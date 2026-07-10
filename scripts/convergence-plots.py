@@ -9,7 +9,7 @@ import zuko
 from pitcp import PITCP
 from scipy.stats import norm
 
-from utils.data import gen_data, score_abs, std
+from utils._data import gen_data, score_abs, std
 
 plt.rcParams.update(
     {
