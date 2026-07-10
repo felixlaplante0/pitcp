@@ -7,6 +7,7 @@ import zuko
 from matplotlib.lines import Line2D
 from pitcp import PITCP
 from scipy.stats import norm
+
 from utils.cqr import CQR
 from utils.data import (
     gen_data,

@@ -8,6 +8,7 @@ import torch
 import zuko
 from pitcp import PITCP
 from scipy.stats import norm
+
 from utils.data import gen_data, score_abs, std
 
 plt.rcParams.update(
@@ -92,7 +93,7 @@ def main():
     ax.set(
         title="Convergence of the PIT-CP procedure",
         xlabel="N (training samples)",
-        ylabel=r"$\mathbb{E}[\widehat{\Delta}(X)]$",
+        ylabel=r"$\mathbb{E}\left[ \widehat{\Delta}(X) \right] \downarrow$",
     )
     ax.legend()
     plt.tight_layout()
