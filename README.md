@@ -14,7 +14,7 @@ Our contribution is `PITCP`. The package also reimplements the state-of-the-art 
 - **Split conformal prediction**: `SCP` calibrates arbitrary scalar nonconformity scores without a learned correction.
 - **Conformalized quantile regression**: `CQR` accepts multiple outputs and provides a scikit-learn gradient-boosting implementation of state-of-the-art conformalized quantile regression.
 - **Highest-density regions**: `HPD` calibrates conditional highest-predictive-density sets.
-- **Latent-space regions**: `CONTRA` maps targets through a conditional normalizing flow and calibrates latent radii.
+- **Latent-space regions**: `CONTRA` maps targets through a conditional normalizing flow and calibrates the Euclidean norm in latent space.
 - **Model-agnostic**: Works with any callable nonconformity score `s(x, y)`, including distance, residual, or likelihood-based scores.
 - **Flexible Density Estimation**: Supports normalizing flows and mixture density networks from the [zuko](https://github.com/probabilists/zuko) library.
 - **Marginal Coverage Guarantee**: Provably valid conformal coverage at any target level via finite-sample calibration.
