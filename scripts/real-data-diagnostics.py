@@ -9,19 +9,11 @@ import zuko
 from catboost import CatBoostRegressor
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
-
-from pitcp import (
-    CONTRA,
-    CQR,
-    HPD,
-    PITCP,
-    SCP,
-    contra_volume,
-    coverage_gap,
-    cqr_volume,
-    hpd_volume,
-    lp_volume,
-)
+from utils.contra import CONTRA
+from utils.cqr import CQRHyperRectangle
+from utils.hpd import HPD
+from utils.scp import SCP
+from utils.volume import vol_base, vol_contra, vol_cqr, vol_hpd, vol_pitcp
 
 ROOT = Path(__file__).resolve().parents[1]
 N_RUNS = 10
