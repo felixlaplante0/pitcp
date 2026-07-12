@@ -58,19 +58,18 @@ def _exercise(estimator: torch.nn.Module, random_state: int | None = None):
     assert covered.dtype == np.dtype(bool)
 
 
-@pytest.mark.parametrize("random_state", [None, 42])
-def test_flow(random_state):
-    """Runs the public workflow with a conditional normalizing flow."""
-    estimator = zuko.flows.SOSPF(features=1, context=1, hidden_features=(4, 4))
+@pytest.mark.parametrize(
+    ("estimator_type", "options", "random_state"),
+    [
+        (zuko.flows.SOSPF, {}, None),
+        (zuko.flows.SOSPF, {}, 42),
+        (zuko.mixtures.GMM, {"components": 2}, None),
+    ],
+)
+def test_pitcp(estimator_type, options, random_state):
+    """Runs the public workflow with every conditional density family."""
+    estimator = estimator_type(features=1, context=1, hidden_features=(4, 4), **options)
     _exercise(estimator, random_state)
-
-
-def test_mixture():
-    """Runs the public workflow with a conditional Gaussian mixture."""
-    estimator = zuko.mixtures.GMM(
-        features=1, context=1, components=2, hidden_features=(4, 4)
-    )
-    _exercise(estimator)
 
 
 def test_scp():

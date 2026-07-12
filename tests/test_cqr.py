@@ -1,6 +1,7 @@
 """Tests for conformalized quantile regression."""
 
 import numpy as np
+import pytest
 from sklearn.base import clone
 from sklearn.ensemble import GradientBoostingRegressor
 
@@ -32,15 +33,16 @@ def test_fit_and_crossing():
     assert estimator.contains(X[13:], y[13:]).shape == (5,)
 
 
-def test_one_sided():
+@pytest.mark.parametrize(("gamma", "infinite_bound"), [(0, 0), (1, 1)])
+def test_one_sided(gamma, infinite_bound):
     """Omits boundary quantiles for lower and upper one-sided intervals."""
     X = np.arange(18, dtype=float).reshape(-1, 1)
     y = X[:, 0]
-    for gamma, infinite_bound in ((0, 0), (1, 1)):
-        estimator = CQR(
-            GradientBoostingRegressor(n_estimators=2),
-            confidence_level=0.8,
-            gamma=gamma,
-        )
-        estimator.fit(X[:8], y[:8]).conformalize(X[8:13], y[8:13])
-        assert np.isinf(estimator.predict(X[13:])[:, infinite_bound]).all()
+    estimator = CQR(
+        GradientBoostingRegressor(n_estimators=2),
+        confidence_level=0.8,
+        gamma=gamma,
+    )
+    estimator.fit(X[:8], y[:8]).conformalize(X[8:13], y[8:13])
+
+    assert np.isinf(estimator.predict(X[13:])[:, infinite_bound]).all()
