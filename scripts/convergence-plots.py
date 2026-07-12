@@ -6,9 +6,11 @@ import pandas as pd
 import seaborn as sns
 import torch
 import zuko
+from _utils import gen_data, score_abs, std
 from pitcp import PITCP
 from scipy.stats import norm
 
+# Set plot parameters
 plt.rcParams.update(
     {
         "font.size": 14,
@@ -19,16 +21,6 @@ plt.rcParams.update(
         "legend.fontsize": 12,
     }
 )
-
-
-# Data generation helpers
-def std(x):
-    return np.abs(1 - 2 * x**2) + 0.1
-
-
-def gen_data(n):
-    x = np.random.rand(n) * 2 - 1
-    return x, np.random.randn(n) * std(x)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -66,13 +58,15 @@ def main():
                     for parameter in model.parameters():
                         parameter.data.zero_()
 
+                # Train PIT-CP model
                 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
                 pit = PITCP(model, optimizer, n_epochs=200, batch_size=512)
                 if n > 0:
-                    pit.fit(X_train[:, None], np.abs(y_train))
-                pit.conformalize(X_cal[:, None], np.abs(y_cal))
+                    pit.fit(X_train[:, None], score_abs(X_train, y_train))
+                pit.conformalize(X_cal[:, None], score_abs(X_cal, y_cal))
 
-                limits = pit.predict(xv, quantile=QUANTILES)
+                # Compute coverage
+                limits = pit.predict(xv, confidence_level=QUANTILES)
                 y_min, y_max = -limits, limits
                 coverage = norm.cdf(y_max / std(xv)) - norm.cdf(y_min / std(xv))
                 data.append(
@@ -101,7 +95,7 @@ def main():
     ax.set(
         title="Convergence of the PIT-CP procedure",
         xlabel="N (training samples)",
-        ylabel=r"$\mathbb{E}[\widehat{\Delta}(X)]$",
+        ylabel=r"$\mathbb{E}\left[ \widehat{\Delta}(X) \right] \downarrow$",
     )
     ax.legend()
     plt.tight_layout()
