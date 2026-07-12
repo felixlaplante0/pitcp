@@ -18,13 +18,21 @@ class CQR(RegressorMixin, SCP):
     LightGBM, XGBoost, or CatBoost regressor. Backend-specific quantile models are
     fitted independently for every target output.
 
+    Quantile estimation settings:
+        - ``estimator``: Unfitted regression prototype cloned into lower- and
+          upper-quantile estimators for every target output. Supported backends are
+          histogram gradient boosting, LightGBM, XGBoost, and CatBoost.
+        - ``confidence_level``: Target marginal coverage probability in the open
+          interval from zero to one. Defaults to 0.9.
+        - ``gamma``: Fraction of total miscoverage assigned to the lower tail, from zero
+          to one. Defaults to 0.5, which gives equal-tailed intervals.
+
     Attributes:
         estimator (BaseEstimator): Unfitted quantile-regression prototype.
         confidence_level (float): Desired marginal coverage level.
         gamma (float): Miscoverage fraction assigned to the lower tail.
-        estimators_ (list[QuantileEstimator]): Fitted quantile adapter for each
-            target output.
-        n_outputs_ (int): Number of fitted target outputs.
+        estimators_ (list[QuantileEstimator]): Fitted quantile adapter for each target
+            output.
         scores_ (np.ndarray): Joint calibration scores.
         correction_ (float): Finite-sample conformal correction.
 
@@ -59,8 +67,8 @@ class CQR(RegressorMixin, SCP):
             estimator (BaseEstimator): HistGradientBoosting, LightGBM, XGBoost, or
                 CatBoost regressor.
             confidence_level (float, optional): Coverage level. Defaults to 0.9.
-            gamma (float, optional): Miscoverage assigned to the lower tail. Defaults
-                to 0.5.
+            gamma (float, optional): Miscoverage assigned to the lower tail. Defaults to
+                0.5.
         """
         self.estimator = estimator
         self.confidence_level = confidence_level
@@ -74,8 +82,8 @@ class CQR(RegressorMixin, SCP):
         """Fits cloned quantile estimators.
 
         Args:
-            X (np.typing.ArrayLike): Training features with shape
-                ``(n_samples, n_features)``.
+            X (np.typing.ArrayLike): Training features with shape ``(n_samples,
+                n_features)``.
             y (np.typing.ArrayLike): Targets with shape ``(n_samples,)`` or
                 ``(n_samples, n_outputs)``.
 
@@ -92,7 +100,6 @@ class CQR(RegressorMixin, SCP):
         if y.ndim == 1:
             y = y[:, None]
 
-        self.n_outputs_ = y.shape[1]
         self.estimators_ = [
             QuantileEstimator(self.estimator, self.confidence_level, self.gamma).fit(
                 X, target
@@ -128,10 +135,10 @@ class CQR(RegressorMixin, SCP):
         """Calibrates a joint correction on held-out targets.
 
         Args:
-            X (np.typing.ArrayLike): Calibration features with shape
-                ``(n_samples, n_features)``.
-            y (np.typing.ArrayLike): Calibration targets with shape
-                ``(n_samples,)`` or ``(n_samples, n_outputs)``.
+            X (np.typing.ArrayLike): Calibration features with shape ``(n_samples,
+                n_features)``.
+            y (np.typing.ArrayLike): Calibration targets with shape ``(n_samples,)`` or
+                ``(n_samples, n_outputs)``.
 
         Returns:
             Self: The calibrated estimator.
@@ -152,8 +159,7 @@ class CQR(RegressorMixin, SCP):
         """Predicts calibrated lower and upper bounds.
 
         Args:
-            X (np.typing.ArrayLike): Features with shape
-                ``(n_samples, n_features)``.
+            X (np.typing.ArrayLike): Features with shape ``(n_samples, n_features)``.
 
         Returns:
             np.ndarray: Bounds with shape ``(n_samples, 2, n_outputs)``, with a
@@ -177,8 +183,7 @@ class CQR(RegressorMixin, SCP):
         """Tests whether targets lie inside every output interval.
 
         Args:
-            X (np.typing.ArrayLike): Features with shape
-                ``(n_samples, n_features)``.
+            X (np.typing.ArrayLike): Features with shape ``(n_samples, n_features)``.
             y (np.typing.ArrayLike): Targets with shape ``(n_samples,)`` or
                 ``(n_samples, n_outputs)``.
 

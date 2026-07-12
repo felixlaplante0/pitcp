@@ -15,10 +15,28 @@ from ._scp import SCP
 
 
 class CONTRA(SCP, nn.Module):
-    """Fits and calibrates inverse-flow images of latent Euclidean balls.
+    r"""Fits inverse-flow images calibrated by the latent Euclidean norm.
 
-    CONTRA calibrates Euclidean radii after mapping targets into the flow's latent
-    coordinates.
+    CONTRA maps targets into a conditional flow's latent coordinates and calibrates the
+    values :math:`\lVert z \rVert_2`, where ``z`` is the transformed target.
+
+    Density estimation settings:
+        - ``estimator``: Conditional ``zuko`` flow mapping targets to latent
+          coordinates. Although construction accepts a Gaussian mixture model for
+          scikit-learn compatibility, ``fit`` rejects it because it has no invertible
+          transform.
+        - ``optimizer``: PyTorch optimizer bound to ``estimator.parameters()`` and used
+          to minimize the negative conditional log-likelihood.
+
+    Training settings:
+        - ``n_epochs``: Positive number of full passes over the training data. Defaults
+          to 10.
+        - ``batch_size``: Positive mini-batch size used during training and scoring.
+          ``None`` uses the full dataset. Defaults to ``None``.
+        - ``verbose``: Boolean or integer controlling the ``tqdm`` training progress
+          bar. Defaults to ``True``.
+        - ``random_state``: Seed controlling mini-batch shuffling during ``fit``.
+          ``None`` uses PyTorch's current random state. Defaults to ``None``.
 
     Attributes:
         estimator (Flow): Conditional normalizing flow.
@@ -27,7 +45,7 @@ class CONTRA(SCP, nn.Module):
         batch_size (int | None): Training batch size or ``None`` for full batches.
         verbose (bool | int): Whether to display training progress.
         random_state (int | None): Mini-batch shuffling seed.
-        scores_ (np.ndarray): Calibration latent radii.
+        scores_ (np.ndarray): Calibrated values of :math:`\lVert z \rVert_2`.
 
     Examples:
         >>> import torch
@@ -64,10 +82,9 @@ class CONTRA(SCP, nn.Module):
                 rejected by ``fit`` because they have no invertible transform.
             optimizer (Optimizer): Torch optimizer for density training.
             n_epochs (int, optional): Training epochs. Defaults to 10.
-            batch_size (int | None, optional): Training batch size. Defaults to
-                None.
-            verbose (bool | int, optional): Whether to show training progress.
-                Defaults to True.
+            batch_size (int | None, optional): Training batch size. Defaults to None.
+            verbose (bool | int, optional): Whether to show training progress. Defaults
+                to True.
             random_state (int | None, optional): DataLoader seed. Defaults to None.
         """
         super().__init__()
@@ -93,12 +110,12 @@ class CONTRA(SCP, nn.Module):
                 n_features)``.
             y (np.typing.ArrayLike): Targets with shape ``(n_samples,)`` or
                 ``(n_samples, n_outputs)``.
-            reset (bool, optional): Whether to reset fitted feature metadata.
-                Defaults to True.
+            reset (bool, optional): Whether to reset fitted feature metadata. Defaults
+                to True.
 
         Returns:
-            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Feature tensor and,
-                when supplied, target tensor.
+            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Feature tensor and, when
+                supplied, target tensor.
         """
         dtype = next(self.estimator.parameters()).dtype
         X, y = validate_data(self, X, y, reset=reset, multi_output=True)
@@ -115,8 +132,8 @@ class CONTRA(SCP, nn.Module):
         """Fits the conditional flow to targets.
 
         Args:
-            X (np.typing.ArrayLike): Training features with shape
-                ``(n_samples, n_features)``.
+            X (np.typing.ArrayLike): Training features with shape ``(n_samples,
+                n_features)``.
             y (np.typing.ArrayLike): Training targets with shape ``(n_samples,)`` or
                 ``(n_samples, n_outputs)``.
 
@@ -168,8 +185,8 @@ class CONTRA(SCP, nn.Module):
         """Computes latent Euclidean norms.
 
         Args:
-            X (torch.Tensor): Conditioning features with shape
-                ``(n_samples, n_features)``.
+            X (torch.Tensor): Conditioning features with shape ``(n_samples,
+                n_features)``.
             y (torch.Tensor): Targets with shape ``(n_samples, n_outputs)``.
 
         Returns:
@@ -204,8 +221,8 @@ class CONTRA(SCP, nn.Module):
         """Calibrates latent Euclidean norms using a fitted density estimator.
 
         Args:
-            X (np.typing.ArrayLike): Calibration features with shape
-                ``(n_samples, n_features)``.
+            X (np.typing.ArrayLike): Calibration features with shape ``(n_samples,
+                n_features)``.
             y (np.typing.ArrayLike): Targets in original coordinates with shape
                 ``(n_samples,)`` or ``(n_samples, n_outputs)``.
 
@@ -236,16 +253,16 @@ class CONTRA(SCP, nn.Module):
         """Tests whether targets lie inside calibrated latent balls.
 
         Args:
-            X (np.typing.ArrayLike): Test features with shape
-                ``(n_samples, n_features)``.
+            X (np.typing.ArrayLike): Test features with shape ``(n_samples,
+                n_features)``.
             y (np.typing.ArrayLike): Test targets with shape ``(n_samples,)`` or
                 ``(n_samples, n_outputs)``.
             confidence_level (float | Sequence[float], optional): Requested coverage
                 levels. Defaults to 0.9.
 
         Returns:
-            np.ndarray: Coverage indicators with shape ``(n_samples,)`` or
-                ``(n_samples, n_levels)``.
+            np.ndarray: Coverage indicators with shape ``(n_samples,)`` or ``(n_samples,
+                n_levels)``.
         """
         check_is_fitted(self, "scores_")
         X, y = self._to_tensor(X, y, reset=False)

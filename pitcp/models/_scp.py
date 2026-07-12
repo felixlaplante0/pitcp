@@ -11,6 +11,16 @@ from ..utils._utils import collapse, confidence_levels
 class SCP(BaseEstimator):
     """Calibrates scalar nonconformity scores by split conformal prediction.
 
+    Calibration settings:
+        - ``s``: Held-out scalar nonconformity scores used to compute the finite-sample
+          corrected empirical quantiles.
+
+    Prediction settings:
+        - ``X``: Test features. Only the number of samples is used because split
+          conformal thresholds do not depend on the feature values.
+        - ``confidence_level``: Target marginal coverage level or sequence of levels in
+          the open interval from zero to one. Defaults to 0.9.
+
     Attributes:
         scores_ (np.ndarray): Held-out calibration scores with shape ``(n_samples,)``.
     """
@@ -72,17 +82,17 @@ class SCP(BaseEstimator):
         *,
         confidence_level: float | Sequence[float] = 0.9,
     ) -> np.ndarray:
-        """Returns score-space region radii for test features.
+        """Returns score-space thresholds for test features.
 
         Args:
-            X (np.typing.ArrayLike): Test features with shape
-                ``(n_samples, n_features)``.
+            X (np.typing.ArrayLike): Test features with shape ``(n_samples,
+                n_features)``.
             confidence_level (float | Sequence[float], optional): Target marginal
                 coverage level or levels. Defaults to 0.9.
 
         Returns:
-            np.ndarray: Score thresholds with shape ```(n_samples,)`` or
-                ``(n_samples, n_levels)``.
+            np.ndarray: Score thresholds with shape ```(n_samples,)`` or ``(n_samples,
+                n_levels)``.
         """
         thresholds = self.thresholds(confidence_level)
 
@@ -109,8 +119,8 @@ class SCP(BaseEstimator):
                 levels. Defaults to 0.9.
 
         Returns:
-            np.ndarray: Coverage indicators with shape ``(n_samples,)`` or
-                ``(n_samples, n_levels)``.
+            np.ndarray: Coverage indicators with shape ``(n_samples,)`` or ``(n_samples,
+                n_levels)``.
         """
         check_is_fitted(self, "scores_")
 

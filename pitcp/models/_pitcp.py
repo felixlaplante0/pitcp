@@ -27,10 +27,10 @@ class PITCP(SCP, nn.Module):
     """PIT conformal predictor using a normalizing flow or mixture density estimator.
 
     This class implements probability integral transform (PIT) conformal prediction.
-    Given a potentially black-box nonconformity scores, it fits a conditional density
+    Given potentially black-box nonconformity scores, it fits a conditional density
     estimator on the score distribution over a training set, then uses the learned
     conditional CDF to map raw scores to PIT values. Conformal coverage guarantees are
-    obtained by comparing test PIT values against a calibration confidence_level.
+    obtained by comparing test PIT values against a calibrated threshold.
 
     The estimator must be a ``zuko`` subclass, coming from either ``zuko.flows.Flow`` (a
     normalizing flow) or ``zuko.mixtures.GMM`` (a mixture density network). The class
@@ -40,14 +40,18 @@ class PITCP(SCP, nn.Module):
         - ``estimator``: A ``zuko`` lazy distribution instance conditioned on features,
           used to model the score distribution. Must be from ``zuko.flows`` or
           ``zuko.mixtures``.
-        - ``optimizer``: Optimizer used to train the density estimator via maximum
-          likelihood (negative log-likelihood/forward KL divergence minimization).
+        - ``optimizer``: PyTorch optimizer bound to ``estimator.parameters()`` and used
+          to minimize the negative conditional log-likelihood.
 
     Training settings:
-        - ``n_epochs``: Number of full passes over the training data.
-        - ``batch_size``: Mini-batch size used during both Train and inference.
-        - ``verbose``: Whether to display a ``tqdm`` progress bar during ``fit``.
-        - ``random_state``: Seed used to shuffle mini-batches during ``fit``.
+        - ``n_epochs``: Positive number of full passes over the training data. Defaults
+          to 10.
+        - ``batch_size``: Positive mini-batch size used during training and inference.
+          ``None`` uses the full dataset. Defaults to ``None``.
+        - ``verbose``: Boolean or integer controlling the ``tqdm`` training progress
+          bar. Defaults to ``True``.
+        - ``random_state``: Seed controlling mini-batch shuffling during ``fit``.
+          ``None`` uses PyTorch's current random state. Defaults to ``None``.
 
     Attributes:
         estimator (Flow | GMM): Conditional density estimator from ``zuko.flows`` or
@@ -157,16 +161,16 @@ class PITCP(SCP, nn.Module):
         """Validates input and converts features and scores to tensors.
 
         Args:
-            X (np.typing.ArrayLike): Input features with shape
-                ``(n_samples, n_features)``.
+            X (np.typing.ArrayLike): Input features with shape ``(n_samples,
+                n_features)``.
             s (np.typing.ArrayLike | None, optional): Target scores with shape
                 ``(n_samples,)`` or ``None``. Defaults to None.
             reset (bool, optional): Whether to set the reset attribute. Deaults to True.
 
         Returns:
-            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Feature tensor with
-                shape ``(n_samples, n_features)`` and, when supplied, score tensor
-                with shape ``(n_samples, 1)``.
+            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Feature tensor with shape
+                ``(n_samples, n_features)`` and, when supplied, score tensor with shape
+                ``(n_samples, 1)``.
         """
         dtype = next(self.parameters()).dtype
         if s is None:
@@ -181,8 +185,7 @@ class PITCP(SCP, nn.Module):
         """Maps nonconformity scores to PIT values via the learned conditional CDF.
 
         Args:
-            X (torch.Tensor): Input features with shape
-                ``(n_samples, n_features)``.
+            X (torch.Tensor): Input features with shape ``(n_samples, n_features)``.
             s (torch.Tensor): Input scores with shape ``(n_samples, 1)``.
 
         Returns:
@@ -226,8 +229,7 @@ class PITCP(SCP, nn.Module):
         """Inverts PIT-corrected nonconformity scores via the learned conditional CDF.
 
         Args:
-            X (torch.Tensor): Input features with shape
-                ``(n_samples, n_features)``.
+            X (torch.Tensor): Input features with shape ``(n_samples, n_features)``.
             confidence_level (float | Sequence[float], optional): Target coverage
                 level(s). Defaults to 0.9.
 
@@ -290,8 +292,8 @@ class PITCP(SCP, nn.Module):
         """Fits the conditional density estimator on nonconformity scores.
 
         Args:
-            X (np.typing.ArrayLike): Training features with shape
-                ``(n_samples, n_features)``.
+            X (np.typing.ArrayLike): Training features with shape ``(n_samples,
+                n_features)``.
             s (np.typing.ArrayLike): Training scores with shape ``(n_samples,)``.
 
         Returns:
@@ -342,8 +344,8 @@ class PITCP(SCP, nn.Module):
         """Computes and stores calibration PIT scores from a held-out dataset.
 
         Args:
-            X (np.typing.ArrayLike): Calibration features with shape
-                ``(n_samples, n_features)``.
+            X (np.typing.ArrayLike): Calibration features with shape ``(n_samples,
+                n_features)``.
             s (np.typing.ArrayLike): Calibration scores with shape ``(n_samples,)``.
 
         Returns:
@@ -370,14 +372,14 @@ class PITCP(SCP, nn.Module):
         """Predicts conformal regions for test points.
 
         Args:
-            X (np.typing.ArrayLike): Test features with shape
-                ``(n_samples, n_features)``.
+            X (np.typing.ArrayLike): Test features with shape ``(n_samples,
+                n_features)``.
             confidence_level (float | Sequence[float], optional): Target coverage
                 level(s). Defaults to 0.9.
 
         Returns:
-            np.ndarray: Score limits with shape ``(n_samples,)`` or
-                ``(n_samples, n_levels)``.
+            np.ndarray: Score limits with shape ``(n_samples,)`` or ``(n_samples,
+                n_levels)``.
         """
         check_is_fitted(self, "scores_")
         X = self._to_tensor(X)  # type: ignore
@@ -404,15 +406,15 @@ class PITCP(SCP, nn.Module):
         """Predicts conformal coverage for test points.
 
         Args:
-            X (np.typing.ArrayLike): Test features with shape
-                ``(n_samples, n_features)``.
+            X (np.typing.ArrayLike): Test features with shape ``(n_samples,
+                n_features)``.
             s (np.typing.ArrayLike): Test scores with shape ``(n_samples,)``.
             confidence_level (float | Sequence[float], optional): Target coverage
                 level(s). Defaults to 0.9.
 
         Returns:
-            np.ndarray: Coverage indicators with shape ``(n_samples,)`` or
-                ``(n_samples, n_levels)``.
+            np.ndarray: Coverage indicators with shape ``(n_samples,)`` or ``(n_samples,
+                n_levels)``.
         """
         check_is_fitted(self, "scores_")
         X, s = self._to_tensor(X, s, reset=False)  # type: ignore

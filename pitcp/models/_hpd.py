@@ -18,9 +18,27 @@ from ._scp import SCP
 class HPD(SCP, nn.Module):
     """Calibrates conditional highest-density scores by Monte Carlo sampling.
 
-    A conditional Zuko distribution models raw scalar scores. Monte Carlo density
-    ranks turn observations into highest-predictive-density nonconformity scores,
-    which are then calibrated by the shared split-conformal threshold.
+    A conditional Zuko distribution models raw scalar scores. Monte Carlo density ranks
+    turn observations into highest-predictive-density nonconformity scores, which are
+    then calibrated by the shared split-conformal threshold.
+
+    Density estimation settings:
+        - ``estimator``: Conditional ``zuko`` flow or Gaussian mixture model used to
+          model the score distribution given the features.
+        - ``optimizer``: PyTorch optimizer bound to ``estimator.parameters()`` and used
+          to minimize the negative conditional log-likelihood.
+
+    Training and sampling settings:
+        - ``n_epochs``: Positive number of full passes over the training data. Defaults
+          to 10.
+        - ``n_samples``: Positive number of Monte Carlo draws used to estimate each
+          highest-density rank. Defaults to 1000.
+        - ``batch_size``: Positive mini-batch size used during training and inference.
+          ``None`` uses the full dataset. Defaults to ``None``.
+        - ``verbose``: Boolean or integer controlling the ``tqdm`` training progress
+          bar. Defaults to ``True``.
+        - ``random_state``: Seed controlling mini-batch shuffling during ``fit``.
+          ``None`` uses PyTorch's current random state. Defaults to ``None``.
 
     Attributes:
         estimator (Flow | GMM): Conditional score-density estimator.
@@ -68,14 +86,14 @@ class HPD(SCP, nn.Module):
             estimator (Flow | GMM): Conditional score-density estimator.
             optimizer (torch.optim.Optimizer): Optimizer for density training.
             n_epochs (int, optional): Number of training epochs. Defaults to 10.
-            n_samples (int, optional): Monte Carlo density-rank sample count.
-                Defaults to 1000.
+            n_samples (int, optional): Monte Carlo density-rank sample count. Defaults
+                to 1000.
             batch_size (int | None, optional): Mini-batch size. ``None`` uses full
                 batches. Defaults to None.
-            verbose (bool | int, optional): Whether to show a progress bar. Defaults
-                to True.
-            random_state (int | None, optional): Mini-batch shuffling seed. Defaults
-                to None.
+            verbose (bool | int, optional): Whether to show a progress bar. Defaults to
+                True.
+            random_state (int | None, optional): Mini-batch shuffling seed. Defaults to
+                None.
         """
         super().__init__()
 
@@ -101,12 +119,12 @@ class HPD(SCP, nn.Module):
                 n_features)``.
             y (np.typing.ArrayLike): Targets with shape ``(n_samples,)`` or
                 ``(n_samples, n_outputs)``.
-            reset (bool, optional): Whether to reset fitted feature metadata.
-                Defaults to True.
+            reset (bool, optional): Whether to reset fitted feature metadata. Defaults
+                to True.
 
         Returns:
-            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Feature tensor and,
-                when supplied, target tensor.
+            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Feature tensor and, when
+                supplied, target tensor.
         """
         dtype = next(self.estimator.parameters()).dtype
         X, y = validate_data(self, X, y, reset=reset, multi_output=True)
@@ -123,8 +141,8 @@ class HPD(SCP, nn.Module):
         """Fits the conditional density estimator to raw scores.
 
         Args:
-            X (np.typing.ArrayLike): Score-training features with shape
-                ``(n_samples, n_features)``.
+            X (np.typing.ArrayLike): Score-training features with shape ``(n_samples,
+                n_features)``.
             y (np.typing.ArrayLike): Targets with shape ``(n_samples,)`` or
                 ``(n_samples, n_outputs)``.
 
@@ -210,8 +228,8 @@ class HPD(SCP, nn.Module):
         """Stores held-out HPD-rank calibration scores.
 
         Args:
-            X (np.typing.ArrayLike): Calibration features with shape
-                ``(n_samples, n_features)``.
+            X (np.typing.ArrayLike): Calibration features with shape ``(n_samples,
+                n_features)``.
             y (np.typing.ArrayLike): Targets with shape ``(n_samples,)`` or
                 ``(n_samples, n_outputs)``.
 
@@ -239,8 +257,8 @@ class HPD(SCP, nn.Module):
         """Predicts calibrated highest-density rank thresholds.
 
         Args:
-            X (np.typing.ArrayLike): Test features with shape
-                ``(n_samples, n_features)``.
+            X (np.typing.ArrayLike): Test features with shape ``(n_samples,
+                n_features)``.
             confidence_level (float | Sequence[float], optional): Target marginal
                 coverage level or levels. Defaults to 0.9.
 
@@ -272,16 +290,16 @@ class HPD(SCP, nn.Module):
         """Tests whether scores lie inside calibrated HPD sets.
 
         Args:
-            X (np.typing.ArrayLike): Test features with shape
-                ``(n_samples, n_features)``.
+            X (np.typing.ArrayLike): Test features with shape ``(n_samples,
+                n_features)``.
             y (np.typing.ArrayLike): Test targets with shape ``(n_samples,)`` or
                 ``(n_samples, n_outputs)``.
             confidence_level (float | Sequence[float], optional): Requested coverage
                 levels. Defaults to 0.9.
 
         Returns:
-            np.ndarray: Coverage indicators with shape ``(n_samples,)`` or
-                ``(n_samples, n_levels)``.
+            np.ndarray: Coverage indicators with shape ``(n_samples,)`` or ``(n_samples,
+                n_levels)``.
         """
         check_is_fitted(self, "scores_")
         X, y = self._to_tensor(X, y, reset=False)
