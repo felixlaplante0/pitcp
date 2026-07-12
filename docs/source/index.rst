@@ -12,7 +12,7 @@ Features
 - **Split conformal prediction**: `SCP` calibrates arbitrary scalar nonconformity scores without a learned correction.
 - **Conformalized quantile regression**: `CQR` accepts multiple outputs and provides a scikit-learn gradient-boosting implementation of state-of-the-art conformalized quantile regression.
 - **Highest-density regions**: `HPD` calibrates conditional highest-predictive-density sets.
-- **Latent-space regions**: `CONTRA` maps targets through a conditional normalizing flow and calibrates the Euclidean norm in latent space.
+- **Latent-space regions**: `CONTRA` maps targets through a conditional normalizing flow and calibrates an Euclidean norm-based score in latent space.
 - **Conformal utilities**: Computes coverage gaps and region volumes for every supported region type.
 
 Installation
@@ -69,7 +69,7 @@ The following example fits a conditional score distribution, calibrates it on he
 Configuration
 -------------
 
-`PITCP` learns conditional score quantiles through a normalizing flow or Gaussian mixture. `SCP` calibrates scores directly. `CQR` learns lower and upper conditional quantiles. `HPD` calibrates density ranks, and `CONTRA` calibrates the Euclidean norm in latent space.
+`PITCP` learns conditional score quantiles through a normalizing flow or Gaussian mixture. `SCP` calibrates scores directly. `CQR` learns lower and upper conditional quantiles. `HPD` calibrates density ranks, and `CONTRA` calibrates an Euclidean norm-based score in latent space.
 
 All estimators follow the scikit-learn parameter API. Fitted estimators expose calibration scores through scores\_. Density-based estimators accept n_epochs, batch_size, verbose, and random_state training controls.
 
