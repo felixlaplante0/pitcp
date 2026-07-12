@@ -17,14 +17,20 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=8,<10", "pytest-cov>=5,<8"]
+test = [
+    "catboost",
+    "lightgbm",
+    "pytest>=8,<10",
+    "pytest-cov>=5,<8",
+    "xgboost",
+]
 
 [build-system]
 requires = ["setuptools>=77", "setuptools-scm[toml]>=6.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["pitcp"]
+[tool.setuptools.packages.find]
+include = ["pitcp*"]
 
 [tool.setuptools_scm]
 version_scheme = "post-release"
@@ -61,4 +67,5 @@ lint.ignore = ["D417", "PLR0913"]
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
+"pitcp/utils/_volume.py" = ["PLC0415"]
 "tests/**/*.py" = ["S101"]

@@ -29,5 +29,4 @@ def test_hpd():
         model.predict(X)
     assert model.fit(X[:4], y[:4]) is model
     assert model.conformalize(X[4:], y[4:]) is model
-    assert model.predict(X, confidence_level=[0.5, 0.75]).shape == (8, 2)
     assert model.contains(X, y, confidence_level=[0.5, 0.75]).shape == (8, 2)

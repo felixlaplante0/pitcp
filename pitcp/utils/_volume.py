@@ -1,20 +1,26 @@
+from __future__ import annotations
+
 from collections.abc import Sequence
 from numbers import Integral, Real
+from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
 from scipy.special import gamma
-from sklearn.utils._param_validation import Interval, validate_params
+from sklearn.utils._param_validation import (
+    Interval,
+    validate_parameter_constraints,
+    validate_params,
+)
 from sklearn.utils.validation import validate_data
 
-from ..models import CONTRA, CQR, HPD, PITCP
-from ..models._scp import SCP
 from ._utils import collapse
 
+if TYPE_CHECKING:
+    from ..models import CONTRA, CQR, HPD, PITCP, SCP
 
-@validate_params(
-    {"cqr": [CQR], "X": ["array-like"]}, prefer_skip_nested_validation=True
-)
+
+@validate_params({"X": ["array-like"]}, prefer_skip_nested_validation=True)
 def cqr_volume(cqr: CQR, X: np.typing.ArrayLike) -> np.ndarray:
     """Computes volumes of conformalized quantile hyperrectangles.
 
@@ -25,6 +31,9 @@ def cqr_volume(cqr: CQR, X: np.typing.ArrayLike) -> np.ndarray:
     Returns:
         np.ndarray: Hyperrectangle volumes with shape ``(n_samples,)``.
     """
+    from ..models._cqr import CQR
+
+    validate_parameter_constraints({"cqr": [CQR]}, {"cqr": cqr}, "cqr_volume")
     bounds = cqr.predict(X).reshape(len(X), 2, -1)
 
     return np.prod(bounds[:, 1] - bounds[:, 0], axis=1)
@@ -32,7 +41,6 @@ def cqr_volume(cqr: CQR, X: np.typing.ArrayLike) -> np.ndarray:
 
 @validate_params(
     {
-        "estimator": [SCP],
         "X": ["array-like"],
         "d": [Interval(Integral, 1, None, closed="left")],
         "confidence_level": [float, Sequence],
@@ -62,6 +70,11 @@ def lp_volume(
         np.ndarray: Volumes with shape ``(n_samples,)`` or ``(n_samples,
             n_levels)``.
     """
+    from ..models._scp import SCP
+
+    validate_parameter_constraints(
+        {"estimator": [SCP]}, {"estimator": estimator}, "lp_volume"
+    )
     radii = estimator.predict(X, confidence_level=confidence_level)
     unit_volume = (
         2.0**d
@@ -74,7 +87,6 @@ def lp_volume(
 
 @validate_params(
     {
-        "hpd": [HPD],
         "X": ["array-like"],
         "confidence_level": [float, Sequence],
         "n_samples": [Interval(Integral, 1, None, closed="left")],
@@ -102,6 +114,9 @@ def hpd_volume(
         np.ndarray: Estimated volumes with shape ``(n_samples,)`` or ``(n_samples,
             n_levels)``.
     """
+    from ..models._hpd import HPD
+
+    validate_parameter_constraints({"hpd": [HPD]}, {"hpd": hpd}, "hpd_volume")
     dtype = next(hpd.estimator.parameters()).dtype
     device = next(hpd.estimator.parameters()).device
 
@@ -132,7 +147,6 @@ def hpd_volume(
 
 @validate_params(
     {
-        "contra": [CONTRA],
         "X": ["array-like"],
         "confidence_level": [float, Sequence],
         "n_samples": [Interval(Integral, 1, None, closed="left")],
@@ -160,6 +174,11 @@ def contra_volume(
         np.ndarray: Estimated volumes with shape ``(n_samples,)`` or ``(n_samples,
             n_levels)``.
     """
+    from ..models._contra import CONTRA
+
+    validate_parameter_constraints(
+        {"contra": [CONTRA]}, {"contra": contra}, "contra_volume"
+    )
     dtype = next(contra.estimator.parameters()).dtype
     device = next(contra.estimator.parameters()).device
 

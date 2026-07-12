@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import torch
 import zuko
-from sklearn.ensemble import GradientBoostingRegressor
+from catboost import CatBoostRegressor
 
 from pitcp import CONTRA, CQR, HPD, PITCP
 from pitcp.utils import (
@@ -30,7 +30,9 @@ def test_cqr_volume():
     """Computes conformal interval lengths."""
     X = np.arange(18, dtype=float).reshape(-1, 1)
     y = X[:, 0]
-    model = CQR(GradientBoostingRegressor(n_estimators=2), confidence_level=0.8)
+    model = CQR(
+        CatBoostRegressor(iterations=2, depth=1, verbose=False), confidence_level=0.8
+    )
     model.fit(X[:8], y[:8]).conformalize(X[8:13], y[8:13])
     bounds = model.predict(X[13:])
 
