@@ -1,5 +1,5 @@
 """PIT-CP conformal prediction with pivotal scores."""
 
-from ._base import PITCP
+from .models import CONTRA, CQR, HPD, PITCP, SCP
 
-__all__ = ["PITCP"]
+__all__ = ["CONTRA", "CQR", "HPD", "PITCP", "SCP"]

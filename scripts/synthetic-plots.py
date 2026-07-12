@@ -4,6 +4,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import zuko
+from _utils import (
+    gen_data,
+    inv_score_abs,
+    inv_score_hpd,
+    inv_score_y,
+    oracle_score_abs,
+    oracle_score_hpd,
+    oracle_score_y,
+    score_abs,
+    score_hpd,
+    score_y,
+    std,
+)
+from catboost import CatBoostRegressor
 from matplotlib.lines import Line2D
 from pitcp import PITCP
 from scipy.stats import chi2, norm
