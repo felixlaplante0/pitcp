@@ -1,15 +1,11 @@
+from collections.abc import Callable
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import zuko
-from matplotlib.lines import Line2D
-from pitcp import PITCP
-from scipy.stats import norm
-
-from utils._cqr import CQR
-from utils._data import (
+from _utils import (
     gen_data,
     inv_score_abs,
     inv_score_hpd,
@@ -22,7 +18,11 @@ from utils._data import (
     score_y,
     std,
 )
-from utils._scp import SCP
+from catboost import CatBoostRegressor
+from matplotlib.lines import Line2D
+from scipy.stats import norm
+
+from pitcp import CQR, PITCP, SCP
 
 # Set plot parameters
 plt.rcParams.update(
@@ -51,26 +51,28 @@ METHOD_STYLES = (
 
 
 def run(
-    score_fn,
-    inv_score_fn,
-    oracle_score_fn,
-    title,
-    q,
-    X_train,
-    y_train,
-    X_cal,
-    y_cal,
-    X_test,
-    y_test,
+    score_fn: Callable[[np.ndarray, np.ndarray], np.ndarray],
+    inv_score_fn: Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]],
+    oracle_score_fn: Callable[[np.ndarray, float], np.ndarray],
+    title: str,
+    q: float,
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    X_cal: np.ndarray,
+    y_cal: np.ndarray,
+    X_test: np.ndarray,
+    y_test: np.ndarray,
 ):
     # CQR
     cqr_gamma = 0 if score_fn is score_y else 1 / 2
-    cqr = CQR(alpha=1 - q, gamma=cqr_gamma).fit(X_train[:, None], y_train)
+    cqr = CQR(
+        CatBoostRegressor(verbose=False), confidence_level=q, gamma=cqr_gamma
+    ).fit(X_train[:, None], y_train)
     cqr.conformalize(X_cal[:, None], y_cal)
 
     # SCP
     scores_cal = score_fn(X_cal, y_cal)
-    scp = SCP(alpha=1 - q).conformalize(X_cal[:, None], scores_cal)
+    scp = SCP().conformalize(scores_cal)
 
     # PIT-CP
     model = zuko.flows.SOSPF(features=1, context=1, hidden_features=(32, 32))
@@ -80,6 +82,7 @@ def run(
     pit.fit(X_train[:, None], score_fn(X_train, y_train))
     pit.conformalize(X_cal[:, None], scores_cal)
 
+    # Feature grid for plotting
     xv = np.linspace(-1, 1, 500)
 
     # Plot results
@@ -90,11 +93,13 @@ def run(
     # Plot intervals and coverage
     for name, fill, dot, ls in METHOD_STYLES:
         if name == "CQR":
-            y_min, y_max = cqr.predict(xv[:, None])
+            y_min, y_max = cqr.predict(xv[:, None]).T
         elif name == "SCP":
-            y_min, y_max = inv_score_fn(xv, scp.predict(xv))
+            y_min, y_max = inv_score_fn(
+                xv, scp.predict(xv[:, None], confidence_level=q)
+            )
         else:
-            lim = pit.predict(xv[:, None], quantile=q)
+            lim = pit.predict(xv[:, None], confidence_level=q)
             y_min, y_max = inv_score_fn(xv, lim)
 
         y_min_plot = np.clip(y_min, *Y_LIM)
@@ -121,8 +126,8 @@ def run(
     ax[2].scatter(X_test, scores_test, c="#7f8c8d", marker="+", s=12, alpha=0.5)
     colors = plt.cm.viridis(np.linspace(0.05, 0.95, len(LEVELS)))
     score_values = [scores_test]
-    for level, color in zip(LEVELS, colors, strict=True):
-        estimated = np.asarray(pit.predict(xv[:, None], quantile=level))
+    estimates = pit.predict(xv[:, None], confidence_level=LEVELS)
+    for level, estimated, color in zip(LEVELS, estimates.T, colors, strict=True):
         oracle = oracle_score_fn(xv, level)
         score_values.extend((estimated, oracle))
         ax[2].plot(xv, estimated, c=color, lw=2, label=f"{level:.1f}")

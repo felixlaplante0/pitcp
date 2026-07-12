@@ -6,11 +6,12 @@ import pandas as pd
 import seaborn as sns
 import torch
 import zuko
-from pitcp import PITCP
+from _utils import gen_data, score_abs, std
 from scipy.stats import norm
 
-from utils._data import gen_data, score_abs, std
+from pitcp import PITCP
 
+# Set plot parameters
 plt.rcParams.update(
     {
         "font.size": 14,
@@ -58,13 +59,15 @@ def main():
                     for parameter in model.parameters():
                         parameter.data.zero_()
 
+                # Train PIT-CP model
                 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
                 pit = PITCP(model, optimizer, n_epochs=200, batch_size=512)
                 if n > 0:
                     pit.fit(X_train[:, None], score_abs(X_train, y_train))
                 pit.conformalize(X_cal[:, None], score_abs(X_cal, y_cal))
 
-                limits = pit.predict(xv, quantile=QUANTILES)
+                # Compute coverage
+                limits = pit.predict(xv, confidence_level=QUANTILES)
                 y_min, y_max = -limits, limits
                 coverage = norm.cdf(y_max / std(xv)) - norm.cdf(y_min / std(xv))
                 data.append(
