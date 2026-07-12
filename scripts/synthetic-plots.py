@@ -6,23 +6,9 @@ import torch
 import zuko
 from matplotlib.lines import Line2D
 from pitcp import PITCP
-from scipy.stats import norm
-
-from utils._cqr import CQR
-from utils._data import (
-    gen_data,
-    inv_score_abs,
-    inv_score_hpd,
-    inv_score_y,
-    oracle_score_abs,
-    oracle_score_hpd,
-    oracle_score_y,
-    score_abs,
-    score_hpd,
-    score_y,
-    std,
-)
-from utils._scp import SCP
+from scipy.stats import chi2, norm
+from utils.cqr import CQR
+from utils.scp import SCP
 
 # Set plot parameters
 plt.rcParams.update(
@@ -37,17 +23,22 @@ plt.rcParams.update(
 )
 
 
+# Data generation helpers
+def std(x):
+    return np.abs(1 - 2 * x**2) + 0.1
+
+
+def gen_data(n):
+    x = np.random.rand(n) * 2 - 1
+    return x, np.random.randn(n) * std(x)
+
+
 ROOT = Path(__file__).resolve().parents[1]
 SAMPLE_SIZES = (5000, 1000, 5000)
 QUANTILES = (0.7, 0.8, 0.9)
 LEVELS = (0.6, 0.7, 0.8, 0.9)
-Y_LIM = (-3.5, 3.5)
 TITLES = ("Symmetric residual score", "Density-level score", "One-sided residual score")
-METHOD_STYLES = (
-    ("CQR", "#e74c3c", "#c0392b", "dotted"),
-    ("SCP", "#3498db", "#2980b9", "dashed"),
-    ("PIT", "#2ecc71", "#27ae60", "solid"),
-)
+Y_LIM = (-3.5, 3.5)
 
 
 def run(
@@ -88,7 +79,11 @@ def run(
     ax[0].scatter(X_test, y_test, c="#7f8c8d", s=3, alpha=0.5)
 
     # Plot intervals and coverage
-    for name, fill, dot, ls in METHOD_STYLES:
+    for name, fill, dot, ls in [
+        ("CQR", "#e74c3c", "#c0392b", "dotted"),
+        ("SCP", "#3498db", "#2980b9", "dashed"),
+        ("PIT", "#2ecc71", "#27ae60", "solid"),
+    ]:
         if name == "CQR":
             y_min, y_max = cqr.predict(xv[:, None])
         elif name == "SCP":
@@ -162,6 +157,50 @@ def run(
     plt.tight_layout()
     plt.savefig(ROOT / "figures" / f"synthetic-quantile-{q}.pdf")
     plt.show()
+
+
+# Define scoring functions
+def score_abs(x, y):
+    return np.abs(y)
+
+
+def inv_score_abs(x, s):
+    return -s, s
+
+
+def oracle_score_abs(x, q):
+    return std(x) * norm.ppf((q + 1) / 2)
+
+
+def score_hpd(x, y):
+    v = std(x) ** 2
+    log_v = np.log(v)
+    return 0.5 * (np.log(2 * np.pi) + log_v + y**2 / v)
+
+
+def inv_score_hpd(x, s):
+    v = std(x) ** 2
+    log_v = np.log(v)
+    y = np.sqrt(np.maximum((2 * s - np.log(2 * np.pi) - log_v) * v, 0))
+    return -y, y
+
+
+def oracle_score_hpd(x, q):
+    v = std(x) ** 2
+    log_v = np.log(v)
+    return 0.5 * (np.log(2 * np.pi) + log_v + chi2.ppf(q, df=1))
+
+
+def score_y(x, y):
+    return y
+
+
+def inv_score_y(x, s):
+    return np.full_like(s, -10), s
+
+
+def oracle_score_y(x, q):
+    return std(x) * norm.ppf(q)
 
 
 def main():
