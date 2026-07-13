@@ -110,7 +110,7 @@ def run(
         ax[0].plot(xv, y_max_plot, c=dot, lw=2, ls=ls)
 
         coverage = norm.cdf(y_max / std(xv)) - norm.cdf(y_min / std(xv))
-        mae = np.abs(coverage - coverage.mean()).mean()
+        mad = np.abs(coverage - coverage.mean()).mean()
         ax[1].plot(xv, coverage, lw=2, c=dot, ls=ls, label=f"{name} cond.")
         ax[1].fill_between(
             xv,
@@ -118,7 +118,7 @@ def run(
             coverage.mean(),
             color=fill,
             alpha=0.3,
-            label=f"MAE: {mae:.3f}",
+            label=f"MAD: {mad:.3f}",
         )
 
     scores_test = score_fn(X_test, y_test)
