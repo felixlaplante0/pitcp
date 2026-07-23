@@ -95,11 +95,13 @@ for Conditional Coverage via Pivotal Scores*](https://doi.org/10.48550/arXiv.260
 
 ## 📊 Reproducing Results
 
-Clone the repository, create and activate a virtual environment, and install the exact package versions used for the paper:
+Clone the repository, create and activate a virtual environment, then install the exact package versions used for the paper:
 
 ```bash
 python -m pip install -r scripts/requirements.txt
 ```
+
+Keep the repository folder layout unchanged: do not move, rename, or flatten its folders, because the experiment scripts resolve paths relative to their file locations.
 
 This installs the frozen `pitcp` release from PyPI together with the
 experimental dependencies recorded in `scripts/requirements.txt`.
@@ -183,7 +185,7 @@ python scripts/real-data-diagnostics.py --sarcos
 python scripts/real-data-diagnostics.py --naval
 ```
 
-The scripts resolve data and output paths from their file locations, so they do not depend on the current working directory. Figures and diagnostic tables are written to `figures/`.
+These commands write figures and diagnostic tables to `figures/`. The paper settings are defined as constants near the top of each script.
 
 ### Script Descriptions
 

@@ -164,6 +164,7 @@ def run(
 
     # Save figure
     plt.tight_layout()
+    (ROOT / "figures").mkdir(exist_ok=True)
     plt.savefig(ROOT / "figures" / f"synthetic-quantile-{q}.pdf")
     plt.show()
 

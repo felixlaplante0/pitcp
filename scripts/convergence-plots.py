@@ -99,6 +99,7 @@ def main():
     )
     ax.legend()
     plt.tight_layout()
+    (ROOT / "figures").mkdir(exist_ok=True)
     plt.savefig(ROOT / "figures" / "convergence.pdf")
     plt.show()
 
