@@ -185,6 +185,14 @@ python scripts/real-data-diagnostics.py --sarcos
 python scripts/real-data-diagnostics.py --naval
 ```
 
+Alternatively, run all four experiments sequentially on Windows, Linux, or macOS:
+
+```bash
+python run-all.py
+```
+
+The runner uses the active Python interpreter and stops if an experiment fails. It does not run `data/predict.py`; prepare or verify the real-data files separately as described above.
+
 These commands write figures and diagnostic tables to `figures/`. The paper settings are defined as constants near the top of each script.
 
 ### Script Descriptions
