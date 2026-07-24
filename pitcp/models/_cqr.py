@@ -2,7 +2,7 @@ from numbers import Real
 from typing import ClassVar, Self
 
 import numpy as np
-from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.base import BaseEstimator
 from sklearn.utils._param_validation import HasMethods, Interval, validate_params
 from sklearn.utils.validation import check_is_fitted, validate_data
 
@@ -11,7 +11,7 @@ from ..utils._utils import collapse
 from ._scp import SCP
 
 
-class CQR(RegressorMixin, SCP):
+class CQR(SCP):
     """Fits conformalized quantile intervals with a boosting estimator.
 
     The estimator can be a scikit-learn histogram gradient booster or an optional
