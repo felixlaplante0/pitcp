@@ -38,6 +38,7 @@ autosummary_generate = True
 add_module_names = False
 napoleon_use_ivar = True
 napoleon_attr_annotations = True
+suppress_warnings = ["docutils"]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

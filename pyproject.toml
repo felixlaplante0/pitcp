@@ -2,7 +2,6 @@
 name = "pitcp"
 description = "PIT-CP conformal prediction with pivotal scores"
 readme = "README.md"
-urls = { "Source" = "https://github.com/felixlaplante0/pitcp" }
 authors = [{ name = "Félix Laplante" }]
 requires-python = ">=3.11"
 license = "GPL-3.0-only"
@@ -22,8 +21,14 @@ test = [
     "lightgbm",
     "pytest>=8,<10",
     "pytest-cov>=5,<8",
+    "streamlit==1.58.0",
     "xgboost",
 ]
+
+[project.urls]
+Source = "https://github.com/felixlaplante0/pitcp"
+Documentation = "https://pitcp.readthedocs.io/en/latest/"
+Playground = "https://pitcp.streamlit.app/"
 
 [build-system]
 requires = ["setuptools>=77", "setuptools-scm[toml]>=6.0", "wheel"]
