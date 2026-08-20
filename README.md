@@ -112,6 +112,13 @@ For tutorials and the API reference, visit the
 The method is described in [*A Post-Processing Conformal Prediction Approach
 for Conditional Coverage via Pivotal Scores*](https://doi.org/10.48550/arXiv.2605.25852).
 
+## 📚 References
+
+- **Split conformal prediction:** Jing Lei, Max G’Sell, Alessandro Rinaldo, Ryan J. Tibshirani, and Larry Wasserman. “Distribution-Free Predictive Inference for Regression.” *Journal of the American Statistical Association*, 113(523), 1094–1111, 2018. [DOI](https://doi.org/10.1080/01621459.2017.1307116).
+- **Conformalized quantile regression:** Yaniv Romano, Evan Patterson, and Emmanuel J. Candès. “Conformalized Quantile Regression.” *Advances in Neural Information Processing Systems 32*, 2019. [NeurIPS](https://papers.neurips.cc/paper_files/paper/2019/hash/5103c3584b063c431bd1268e9b5e76fb-Abstract.html).
+- **HPD-split:** Rafael Izbicki, Gilson Shimizu, and Rafael B. Stern. “CD-split and HPD-split: Efficient Conformal Regions in High Dimensions.” *Journal of Machine Learning Research*, 23(87), 1–32, 2022. [JMLR](https://www.jmlr.org/papers/v23/20-797.html).
+- **CONTRA:** Zhenhan Fang, Aixin Tan, and Jian Huang. “CONTRA: Conformal Prediction Region via Normalizing Flow Transformation.” *International Conference on Learning Representations*, 2025. [ICLR](https://proceedings.iclr.cc/paper_files/paper/2025/hash/e55d081280e79e714debf2902e18eb69-Abstract-Conference.html).
+
 ---
 
 ## 📊 Reproducing Results
