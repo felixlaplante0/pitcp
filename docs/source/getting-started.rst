@@ -17,12 +17,12 @@ guarantee.
    import zuko
    from pitcp import PITCP
 
-   density = zuko.flows.SOSPF(
+   flow = zuko.flows.SOSPF(
        features=1, context=1, hidden_features=(32, 32)
    )
-   optimizer = torch.optim.Adam(density.parameters(), lr=1e-3)
+   optimizer = torch.optim.Adam(flow.parameters(), lr=1e-3)
    model = PITCP(
-       density,
+       flow,
        optimizer,
        n_epochs=200,
        batch_size=512,
