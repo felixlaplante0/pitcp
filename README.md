@@ -1,7 +1,9 @@
 # 🎯 PIT-CP
 
+<p align="center"><img src="https://raw.githubusercontent.com/felixlaplante0/pitcp/main/docs/source/_static/pitcp-ribbon.svg" alt="PIT-CP logo" width="96"></p>
+
 [![codecov](https://codecov.io/gh/felixlaplante0/pitcp/graph/badge.svg)](https://codecov.io/gh/felixlaplante0/pitcp)
-[![documentation](https://readthedocs.org/projects/pitcp/badge/?version=latest)](https://pitcp.readthedocs.io/en/latest/)
+[![Read the Docs](https://readthedocs.org/projects/pitcp/badge/?version=latest)](https://pitcp.readthedocs.io/en/latest/)
 [![Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://pitcp-app.streamlit.app/)
 
 **pitcp** is a Python package for conformal prediction using **probability integral transform (PIT) pivotal scores**. Given any black-box nonconformity score, it fits a conditional density estimator on the score distribution and maps raw scores to PIT values, yielding valid marginal coverage at any user-specified level.
@@ -88,7 +90,7 @@ print(f"Empirical coverages: {covered.mean(axis=0)}")
 ## 📖 Learn More
 
 For tutorials and the API reference, visit the
-[documentation](https://pitcp.readthedocs.io/en/latest/). Try the methods in the
+[Read the Docs documentation](https://pitcp.readthedocs.io/en/latest/). Try the methods in the
 [interactive playground](https://pitcp-app.streamlit.app/).
 
 The method is described in [*A Post-Processing Conformal Prediction Approach

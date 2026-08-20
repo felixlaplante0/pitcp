@@ -1,7 +1,8 @@
 Interactive playground
 ======================
 
-Explore the same heteroscedastic candy example used by the experiment scripts. Choose
+Explore the same heteroscedastic candy example used by the experiment scripts in the
+`interactive Streamlit playground <https://pitcp-app.streamlit.app/>`_. Choose
 ``PITCP``, ``SCP``, ``CQR``, ``HPD``, or ``CONTRA`` and request any confidence level
 from 0.50 to 0.99.
 
@@ -12,13 +13,6 @@ region plot.
 
 .. raw:: html
 
-   <iframe
-     src="https://pitcp-app.streamlit.app/?embed=true"
-     title="PIT-CP interactive playground"
-     loading="lazy"
-     allow="clipboard-read; clipboard-write"
-     style="width: 100%; height: 1050px; border: 1px solid var(--pst-color-border); border-radius: 12px;"
-   ></iframe>
+   <meta http-equiv="refresh" content="0; url=https://pitcp-app.streamlit.app/">
 
-If the embedded application is sleeping or does not fit your screen,
-`open the playground in a new tab <https://pitcp-app.streamlit.app/>`_.
+`Open the playground <https://pitcp-app.streamlit.app/>`_.

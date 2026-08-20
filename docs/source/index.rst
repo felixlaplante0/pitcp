@@ -11,7 +11,7 @@ PIT-CP
      input, then conformalizes it at any confidence level.</p>
      <div class="hero-actions">
        <a class="primary" href="getting-started.html">Get started</a>
-       <a class="secondary" href="playground.html">Try the playground</a>
+       <a class="secondary" href="https://pitcp-app.streamlit.app/">Try the playground</a>
      </div>
    </section>
 
