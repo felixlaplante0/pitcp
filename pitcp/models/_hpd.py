@@ -108,17 +108,17 @@ class HPD(SCP, nn.Module):
     def _to_tensor(
         self,
         X: np.typing.ArrayLike,
-        y: np.typing.ArrayLike,
+        y: np.typing.ArrayLike | None = None,
         *,
         reset: bool = True,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         """Validates inputs and converts them to estimator-compatible tensors.
 
         Args:
             X (np.typing.ArrayLike): Input features with shape ``(n_samples,
                 n_features)``.
-            y (np.typing.ArrayLike): Targets with shape ``(n_samples,)`` or
-                ``(n_samples, n_outputs)``.
+            y (np.typing.ArrayLike | None, optional): Targets with shape
+                ``(n_samples,)`` or ``(n_samples, n_outputs)``. Defaults to None.
             reset (bool, optional): Whether to reset fitted feature metadata. Defaults
                 to True.
 
@@ -127,6 +127,10 @@ class HPD(SCP, nn.Module):
                 supplied, target tensor.
         """
         dtype = next(self.estimator.parameters()).dtype
+        if y is None:
+            X = validate_data(self, X, reset=False)
+            return torch.tensor(X, dtype=dtype)
+
         X, y = validate_data(self, X, y, reset=reset, multi_output=True)
 
         return torch.tensor(X, dtype=dtype), torch.tensor(y, dtype=dtype).reshape(
@@ -266,8 +270,7 @@ class HPD(SCP, nn.Module):
             np.ndarray: Thresholds, with the level axis omitted for one level.
         """
         check_is_fitted(self, "scores_")
-        dtype = next(self.estimator.parameters()).dtype
-        X = torch.tensor(validate_data(self, X, reset=False), dtype=dtype)
+        X = self._to_tensor(X)
 
         thresholds = self.thresholds(confidence_level)
 
