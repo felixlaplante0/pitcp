@@ -51,5 +51,5 @@ What each split does
 
       Request one confidence level or several from the fitted model.
 
-Next, work through the :doc:`tutorial` or compare methods in the
-:doc:`playground`.
+Next, work through the :doc:`tutorial` or try the
+`interactive playground <https://pitcp-app.streamlit.app/>`_.

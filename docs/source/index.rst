@@ -88,5 +88,4 @@ Choose a method
    getting-started
    methods
    tutorial
-   playground
    modules
