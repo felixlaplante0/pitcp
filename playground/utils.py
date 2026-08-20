@@ -323,7 +323,7 @@ def _coverage_chart(
         alt.Chart(theory)
         .mark_line(strokeWidth=2.5)
         .encode(
-            x=alt.X("x:Q", title="Input bin"),
+            x=alt.X("x:Q", title="X"),
             y=alt.Y(
                 "coverage:Q",
                 title="Coverage",

@@ -138,8 +138,8 @@ def _cached_results(
     results = {}
     summaries = []
     for name in METHODS:
-        x_test = data["x_test"][:N_TEST]
-        y_test = data["y_test"][:N_TEST]
+        x_test = data["x_test"]
+        y_test = data["y_test"]
         lower, upper, covered = _prediction(
             name,
             models[name],
@@ -197,8 +197,8 @@ def main():  # noqa: D103
         results,
         selected_methods,
         x_grid,
-        data["x_test"][:N_TEST],
-        data["y_test"][:N_TEST],
+        data["x_test"],
+        data["y_test"],
     )
     coverage_chart = _coverage_chart(
         results,
