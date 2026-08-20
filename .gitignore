@@ -209,6 +209,9 @@ tempCodeRunnerFile.py
 # Ruff stuff:
 .ruff_cache/
 
+# CatBoost training logs
+catboost_info/
+
 # PyPI configuration file
 .pypirc
 
