@@ -11,8 +11,7 @@ fitted for the confidence level you select because its response quantiles change
 that level. Results use 2,500 test observations, all of which are shown in the
 region plot.
 
-.. raw:: html
-
-   <meta http-equiv="refresh" content="0; url=https://pitcp-app.streamlit.app/">
+.. meta::
+   :http-equiv=refresh: 0; url=https://pitcp-app.streamlit.app/
 
 `Open the playground <https://pitcp-app.streamlit.app/>`_.
