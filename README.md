@@ -1,10 +1,26 @@
-# 🎯 PIT-CP
+<p align="center">
+  <img src="https://raw.githubusercontent.com/felixlaplante0/pitcp/main/docs/source/_static/pitcp-ribbon.svg" alt="PIT-CP logo" width="128">
+</p>
 
-<p align="center"><img src="https://raw.githubusercontent.com/felixlaplante0/pitcp/main/docs/source/_static/pitcp-ribbon.svg" alt="PIT-CP logo" width="96"></p>
+<h1 align="center">PIT-CP</h1>
 
-[![codecov](https://codecov.io/gh/felixlaplante0/pitcp/graph/badge.svg)](https://codecov.io/gh/felixlaplante0/pitcp)
-[![Read the Docs](https://readthedocs.org/projects/pitcp/badge/?version=latest)](https://pitcp.readthedocs.io/en/latest/)
-[![Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://pitcp-app.streamlit.app/)
+<p align="center"><strong>Prediction regions that follow the data.</strong><br>
+Adaptive conformal prediction with pivotal scores and conditional coverage.</p>
+
+<p align="center">
+  <a href="https://pitcp.readthedocs.io/en/latest/">Documentation</a> ·
+  <a href="https://pitcp-app.streamlit.app/">Interactive playground</a> ·
+  <a href="https://pypi.org/project/pitcp/">PyPI</a>
+</p>
+
+<p align="center">
+  <a href="https://pypi.org/project/pitcp/"><img src="https://img.shields.io/pypi/v/pitcp?logo=pypi&logoColor=white" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/pitcp/"><img src="https://img.shields.io/pypi/pyversions/pitcp?logo=python&logoColor=white" alt="Supported Python versions"></a>
+  <a href="https://github.com/felixlaplante0/pitcp/actions/workflows/lint.yml"><img src="https://github.com/felixlaplante0/pitcp/actions/workflows/lint.yml/badge.svg" alt="Lint status"></a>
+  <a href="https://codecov.io/gh/felixlaplante0/pitcp"><img src="https://codecov.io/gh/felixlaplante0/pitcp/graph/badge.svg" alt="Coverage"></a>
+  <a href="https://pitcp.readthedocs.io/en/latest/"><img src="https://readthedocs.org/projects/pitcp/badge/?version=latest" alt="Documentation status"></a>
+  <a href="https://github.com/felixlaplante0/pitcp/blob/main/LICENSE"><img src="https://img.shields.io/github/license/felixlaplante0/pitcp" alt="License"></a>
+</p>
 
 **pitcp** is a Python package for conformal prediction using **probability integral transform (PIT) pivotal scores**. Given any black-box nonconformity score, it fits a conditional density estimator on the score distribution and maps raw scores to PIT values, yielding valid marginal coverage at any user-specified level.
 
