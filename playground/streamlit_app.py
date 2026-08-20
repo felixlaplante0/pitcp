@@ -1,11 +1,16 @@
 """Streamlit application comparing every conformal model in pitcp."""
 
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import streamlit as st
 import streamlit.components.v2 as components
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from playground.utils import (
     COLORS,
@@ -20,8 +25,7 @@ from playground.utils import (
     _theoretical_coverage,
 )
 
-ROOT = Path(__file__).resolve().parent
-TEST_POINTS = 2500
+N_TEST = 2500
 
 _METHOD_SELECTOR = components.component(
     "pitcp_method_selector",
@@ -133,8 +137,8 @@ def _cached_results(
     results = {}
     summaries = []
     for name in METHODS:
-        x_test = data["x_test"][:TEST_POINTS]
-        y_test = data["y_test"][:TEST_POINTS]
+        x_test = data["x_test"][:N_TEST]
+        y_test = data["y_test"][:N_TEST]
         lower, upper, covered = _prediction(
             name,
             models[name],
@@ -192,8 +196,8 @@ def main():  # noqa: D103
         results,
         selected_methods,
         x_grid,
-        data["x_test"][:TEST_POINTS],
-        data["y_test"][:TEST_POINTS],
+        data["x_test"][:N_TEST],
+        data["y_test"][:N_TEST],
     )
     coverage_chart = _coverage_chart(
         results,
