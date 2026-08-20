@@ -8,9 +8,9 @@ import pandas as pd
 import streamlit as st
 import streamlit.components.v2 as components
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from playground.utils import (
     COLORS,
@@ -25,6 +25,7 @@ from playground.utils import (
     _theoretical_coverage,
 )
 
+ROOT = Path(__file__).resolve().parent
 N_TEST = 2500
 
 _METHOD_SELECTOR = components.component(
