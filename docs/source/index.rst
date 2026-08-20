@@ -1,82 +1,92 @@
 PIT-CP
 ======
 
-**pitcp** is a Python package for conformal prediction using probability integral transform (PIT) pivotal scores. Given any black-box nonconformity score, it fits a conditional density estimator on the score distribution and maps raw scores to PIT values, yielding valid marginal coverage at any user-specified level.
+.. raw:: html
 
-Our contribution is `PITCP`. The package also reimplements the state-of-the-art `SCP`, `CQR`, `HPD`, and `CONTRA` baselines behind a consistent scikit-learn API.
+   <section class="hero">
+     <img class="hero-logo" src="_static/pitcp-ribbon.svg" alt="PIT-CP adaptive prediction logo">
+     <p class="eyebrow">CONFORMAL PREDICTION, MADE ADAPTIVE</p>
+     <h1>Prediction regions that follow the data.</h1>
+     <p class="hero-copy">PIT-CP learns how a nonconformity score changes with the
+     input, then conformalizes it at any confidence level.</p>
+     <div class="hero-actions">
+       <a class="primary" href="getting-started.html">Get started</a>
+       <a class="secondary" href="playground.html">Try the playground</a>
+     </div>
+   </section>
 
-Features
---------
+.. raw:: html
 
-- **PIT conformal prediction**: `PITCP` maps base nonconformity scores through a learned conditional CDF.
-- **Split conformal prediction**: `SCP` calibrates arbitrary scalar nonconformity scores without a learned correction.
-- **Conformalized quantile regression**: `CQR` accepts multiple outputs and provides a scikit-learn gradient-boosting implementation of state-of-the-art conformalized quantile regression.
-- **Highest-density regions**: `HPD` calibrates conditional highest-predictive-density sets.
-- **Latent-space regions**: `CONTRA` maps targets through a conditional normalizing flow and calibrates a Euclidean norm-based score in latent space.
-- **Conformal utilities**: Computes coverage gaps and region volumes for every supported region type.
+   <aside class="pypi-card">
+     <div>
+       <span class="pypi-kicker">PYTHON PACKAGE</span>
+       <strong>Available on PyPI</strong>
+       <p>Install PIT-CP in one command and start building adaptive regions.</p>
+     </div>
+     <a href="https://pypi.org/project/pitcp/">View package&nbsp;→</a>
+   </aside>
 
-Installation
-------------
+Why PIT-CP?
+-----------
 
-Install the package from PyPI:
+Marginal coverage can hide large local errors. ``PITCP`` learns the conditional
+distribution of any scalar nonconformity score and maps it to a pivotal score before
+calibration. The same fitted density supports every confidence level.
 
-.. code-block:: bash
+.. grid:: 1 2 2 3
+   :gutter: 3
 
-   python -m pip install pitcp
+   .. grid-item-card:: Adaptive regions
+      :class-card: feature-card
 
-Usage
------
+      Let prediction widths follow heteroscedasticity instead of staying constant.
 
-The following example fits a conditional score distribution, calibrates it on held-out data, and predicts score thresholds and coverage indicators.
+   .. grid-item-card:: Any confidence level
+      :class-card: feature-card
 
-.. code-block:: python
+      Change the requested coverage without fitting the PITCP density again.
 
-   import torch
-   import zuko
-   from pitcp import PITCP
+   .. grid-item-card:: Familiar workflow
+      :class-card: feature-card
 
+      Fit, conformalize, predict, and evaluate with scikit-learn-style estimators.
 
-   def std(x):
-       return torch.where((x > -0.9) & (x < 0.9), torch.cos(torch.pi * x / 2), 1.0)
+Choose a method
+---------------
 
+.. grid:: 1 2 2 3
+   :gutter: 3
 
-   def gen_data(n):
-       x = torch.rand(n, 1) * 2 - 1
-       return x, torch.randn(n, 1) * std(x)
+   .. grid-item-card:: PITCP
+      :link: methods
+      :link-type: doc
 
+      Conditional score model. Best starting point for adaptive regions.
 
-   torch.manual_seed(42)
-   (X_train, y_train), (X_cal, y_cal), (X_test, y_test) = [
-       gen_data(5000) for _ in range(3)
-   ]
+   .. grid-item-card:: SCP
+      :link: methods
+      :link-type: doc
 
-   s_train = y_train.abs()
-   s_cal = y_cal.abs()
-   s_test = y_test.abs()
-   density = zuko.flows.NSF(
-       features=1, context=1, bins=4, hidden_features=(32, 32, 32)
-   )
-   optimizer = torch.optim.Adam(density.parameters(), lr=1e-2)
+      The smallest baseline: one calibrated score threshold for every input.
 
-   model = PITCP(density, optimizer, n_epochs=10, batch_size=128)
-   model.fit(X_train, s_train).conformalize(X_cal, s_cal)
+   .. grid-item-card:: CQR
+      :link: methods
+      :link-type: doc
 
-   limits = model.predict(X_test, confidence_level=[0.7, 0.8, 0.9])
-   covered = model.contains(
-       X_test, s_test, confidence_level=[0.7, 0.8, 0.9]
-   )
+      Learns response quantiles and must be refitted when the confidence level changes.
 
-Configuration
--------------
+   .. grid-item-card:: HPD and CONTRA
+      :link: methods
+      :link-type: doc
 
-`PITCP` learns conditional score quantiles through a normalizing flow or Gaussian mixture. `SCP` calibrates scores directly. `CQR` learns lower and upper conditional quantiles. `HPD` calibrates density ranks, and `CONTRA` calibrates a Euclidean norm-based score in latent space.
-
-All estimators follow the scikit-learn parameter API. Fitted estimators expose calibration scores through scores\_. Density-based estimators accept n_epochs, batch_size, verbose, and random_state training controls.
-
-API Reference
--------------
+      Density-level and latent-space regions for richer conditional distributions.
 
 .. toctree::
+   :hidden:
    :maxdepth: 2
 
+   getting-started
+   methods
+   tutorial
+   playground
    modules

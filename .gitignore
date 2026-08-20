@@ -167,6 +167,9 @@ venv.bak/
 # mkdocs documentation
 /site
 
+# Generated Sphinx API pages
+docs/source/generated/
+
 # mypy
 .mypy_cache/
 .dmypy.json
@@ -205,6 +208,9 @@ tempCodeRunnerFile.py
 
 # Ruff stuff:
 .ruff_cache/
+
+# CatBoost training logs
+catboost_info/
 
 # PyPI configuration file
 .pypirc

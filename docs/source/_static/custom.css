@@ -1,0 +1,169 @@
+:root {
+  --pit-purple: #6750a4;
+}
+
+.bd-page-width {
+  max-width: 110rem;
+}
+
+.bd-article-container {
+  max-width: none;
+}
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  margin: 1rem 0 2rem;
+  padding: clamp(2rem, 6vw, 5rem);
+  border-radius: 1.25rem;
+  color: white;
+  background: radial-gradient(circle at 80% 38%, #a78bfa 0, transparent 30%),
+    linear-gradient(135deg, #33265f, var(--pit-purple));
+}
+
+.hero-logo {
+  display: block;
+  position: absolute;
+  top: 38%;
+  right: clamp(2rem, 10%, 7rem);
+  z-index: 1;
+  width: clamp(7rem, 16vw, 11rem);
+  height: auto;
+  margin: 0;
+  border: 0 !important;
+  outline: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: translateY(-50%);
+}
+
+.hero h1 {
+  max-width: 13ch;
+  margin: 0.2rem 0 1rem;
+  color: white;
+  font-size: clamp(2.5rem, 6vw, 4.8rem);
+  line-height: 1.02;
+}
+
+.hero > .eyebrow,
+.hero > h1,
+.hero > .hero-copy,
+.hero > .hero-actions {
+  position: relative;
+  z-index: 2;
+  max-width: 52%;
+}
+
+.eyebrow {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.hero-copy {
+  max-width: 45rem;
+  font-size: 1.2rem;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.hero-actions a {
+  padding: 0.7rem 1.1rem;
+  border: 1px solid white;
+  border-radius: 0.5rem;
+  color: white;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.hero-actions .primary {
+  color: #33265f;
+  background: white;
+}
+
+.feature-card {
+  border-top: 3px solid var(--pit-purple);
+}
+
+.pypi-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin: -1rem auto 3rem;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  padding: 1rem 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--pit-purple) 35%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--pit-purple) 9%, transparent);
+}
+
+.pypi-card strong {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--pst-color-text-base);
+  font-size: 1.05rem;
+}
+
+.pypi-card p {
+  margin: 0.2rem 0 0;
+  color: var(--pst-color-text-muted);
+  font-size: 0.9rem;
+}
+
+.pypi-kicker {
+  display: block;
+  color: var(--pit-purple);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.pypi-card a {
+  flex: 0 0 auto;
+  padding: 0.55rem 0.8rem;
+  border-radius: 0.5rem;
+  color: white;
+  background: var(--pit-purple);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.pypi-card a:hover {
+  color: white;
+  filter: brightness(1.1);
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 2rem 1.5rem;
+  }
+
+  .hero-logo {
+    position: static;
+    top: auto;
+    width: 5.5rem;
+    margin-bottom: 1.25rem;
+    transform: none;
+  }
+
+  .hero > .eyebrow,
+  .hero > h1,
+  .hero > .hero-copy,
+  .hero > .hero-actions {
+    max-width: none;
+  }
+
+  .pypi-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
