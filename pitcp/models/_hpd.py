@@ -266,7 +266,8 @@ class HPD(SCP, nn.Module):
             np.ndarray: Thresholds, with the level axis omitted for one level.
         """
         check_is_fitted(self, "scores_")
-        X = self._to_tensor(X)
+        dtype = next(self.estimator.parameters()).dtype
+        X = torch.tensor(validate_data(self, X, reset=False), dtype=dtype)
 
         thresholds = self.thresholds(confidence_level)
 
