@@ -11,7 +11,6 @@ from torch import nn
 from zuko.flows import Flow
 from zuko.mixtures import GMM
 
-from ..utils._utils import collapse
 from ._scp import SCP
 
 
@@ -108,17 +107,17 @@ class HPD(SCP, nn.Module):
     def _to_tensor(
         self,
         X: np.typing.ArrayLike,
-        y: np.typing.ArrayLike | None = None,
+        y: np.typing.ArrayLike,
         *,
         reset: bool = True,
-    ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Validates inputs and converts them to estimator-compatible tensors.
 
         Args:
             X (np.typing.ArrayLike): Input features with shape ``(n_samples,
                 n_features)``.
-            y (np.typing.ArrayLike | None, optional): Targets with shape
-                ``(n_samples,)`` or ``(n_samples, n_outputs)``. Defaults to None.
+            y (np.typing.ArrayLike): Targets with shape ``(n_samples,)`` or
+                ``(n_samples, n_outputs)``.
             reset (bool, optional): Whether to reset fitted feature metadata. Defaults
                 to True.
 
@@ -127,10 +126,6 @@ class HPD(SCP, nn.Module):
                 supplied, target tensor.
         """
         dtype = next(self.estimator.parameters()).dtype
-        if y is None:
-            X = validate_data(self, X, reset=False)
-            return torch.tensor(X, dtype=dtype)
-
         X, y = validate_data(self, X, y, reset=reset, multi_output=True)
 
         return torch.tensor(X, dtype=dtype), torch.tensor(y, dtype=dtype).reshape(
@@ -247,34 +242,6 @@ class HPD(SCP, nn.Module):
         self.scores_ = self._score(X, y)
 
         return self
-
-    @validate_params(
-        {"X": ["array-like"], "confidence_level": [float, Sequence]},
-        prefer_skip_nested_validation=True,
-    )
-    def predict(
-        self,
-        X: np.typing.ArrayLike,
-        *,
-        confidence_level: float | Sequence[float] = 0.9,
-    ) -> np.ndarray:
-        """Predicts calibrated highest-density rank thresholds.
-
-        Args:
-            X (np.typing.ArrayLike): Test features with shape ``(n_samples,
-                n_features)``.
-            confidence_level (float | Sequence[float], optional): Target marginal
-                coverage level or levels. Defaults to 0.9.
-
-        Returns:
-            np.ndarray: Thresholds, with the level axis omitted for one level.
-        """
-        check_is_fitted(self, "scores_")
-        X = self._to_tensor(X)
-
-        thresholds = self.thresholds(confidence_level)
-
-        return collapse(np.broadcast_to(thresholds, (len(X), len(thresholds))))
 
     @validate_params(
         {
