@@ -13,7 +13,7 @@ region plot.
 .. raw:: html
 
    <iframe
-     src="https://pitcp.streamlit.app/?embed=true"
+     src="https://pitcp-app.streamlit.app/?embed=true"
      title="PIT-CP interactive playground"
      loading="lazy"
      allow="clipboard-read; clipboard-write"
@@ -21,4 +21,4 @@ region plot.
    ></iframe>
 
 If the embedded application is sleeping or does not fit your screen,
-`open the playground in a new tab <https://pitcp.streamlit.app/>`_.
+`open the playground in a new tab <https://pitcp-app.streamlit.app/>`_.

@@ -67,7 +67,7 @@ html_theme_options = {
         },
         {
             "name": "Playground",
-            "url": "https://pitcp.streamlit.app/",
+            "url": "https://pitcp-app.streamlit.app/",
             "icon": "fa-solid fa-chart-line",
             "type": "fontawesome",
         },

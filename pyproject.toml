@@ -27,7 +27,7 @@ test = [
 [project.urls]
 Source = "https://github.com/felixlaplante0/pitcp"
 Documentation = "https://pitcp.readthedocs.io/en/latest/"
-Playground = "https://pitcp.streamlit.app/"
+Playground = "https://pitcp-app.streamlit.app/"
 
 [build-system]
 requires = ["setuptools>=77", "setuptools-scm[toml]>=6.0", "wheel"]

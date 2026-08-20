@@ -2,7 +2,7 @@
 
 [![codecov](https://codecov.io/gh/felixlaplante0/pitcp/graph/badge.svg)](https://codecov.io/gh/felixlaplante0/pitcp)
 [![documentation](https://readthedocs.org/projects/pitcp/badge/?version=latest)](https://pitcp.readthedocs.io/en/latest/)
-[![Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://pitcp.streamlit.app/)
+[![Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://pitcp-app.streamlit.app/)
 
 **pitcp** is a Python package for conformal prediction using **probability integral transform (PIT) pivotal scores**. Given any black-box nonconformity score, it fits a conditional density estimator on the score distribution and maps raw scores to PIT values, yielding valid marginal coverage at any user-specified level.
 
@@ -89,7 +89,7 @@ print(f"Empirical coverages: {covered.mean(axis=0)}")
 
 For tutorials and the API reference, visit the
 [documentation](https://pitcp.readthedocs.io/en/latest/). Try the methods in the
-[interactive playground](https://pitcp.streamlit.app/).
+[interactive playground](https://pitcp-app.streamlit.app/).
 
 The method is described in [*A Post-Processing Conformal Prediction Approach
 for Conditional Coverage via Pivotal Scores*](https://doi.org/10.48550/arXiv.2605.25852).
