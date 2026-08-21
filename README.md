@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/felixlaplante0/pitcp/main/docs/source/_static/pitcp-ribbon.svg" alt="PIT-CP logo" width="128">
+  <img src="https://raw.githubusercontent.com/felixlaplante0/pitcp/main/docs/source/_static/pitcp-logo.svg" alt="PIT-CP logo" width="128">
 </p>
 
 <h1 align="center">PIT-CP</h1>

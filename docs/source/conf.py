@@ -52,8 +52,8 @@ html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 html_title = "PIT-CP"
-html_logo = "_static/pitcp-ribbon.svg"
-html_favicon = "_static/pitcp-ribbon.svg"
+html_logo = "_static/pitcp-logo.svg"
+html_favicon = "_static/pitcp-logo.svg"
 html_theme_options = {
     "navbar_align": "left",
     "show_toc_level": 2,

@@ -4,7 +4,7 @@ PIT-CP
 .. raw:: html
 
    <section class="hero">
-     <img class="hero-logo" src="_static/pitcp-ribbon.svg" alt="PIT-CP adaptive prediction logo">
+     <img class="hero-logo" src="_static/pitcp-logo.svg" alt="PIT-CP adaptive prediction logo">
      <p class="eyebrow">CONFORMAL PREDICTION, MADE ADAPTIVE</p>
      <h1>Prediction regions that follow the data.</h1>
      <p class="hero-copy">PIT-CP learns how a nonconformity score changes with the

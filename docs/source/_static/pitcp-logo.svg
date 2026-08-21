@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">PIT-CP logo</title>
+  <desc id="desc">A smooth pivotal curve inside an adaptive prediction band.</desc>
+  <defs>
+    <linearGradient id="surface" x1="28" y1="20" x2="228" y2="236" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#241B46"/>
+      <stop offset="1" stop-color="#684FA5"/>
+    </linearGradient>
+    <linearGradient id="band" x1="28" y1="128" x2="228" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A890F5"/>
+      <stop offset="1" stop-color="#44A3D8"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="60" fill="url(#surface)"/>
+  <path
+    d="M30 171 C60 94 78 174 108 118 C138 62 157 79 179 127 C199 170 209 176 218 151
+       C204 190 180 186 158 152 C136 118 119 137 102 166 C85 195 62 218 30 171 Z"
+    fill="url(#band)" opacity=".7"/>
+  <path
+    d="M30 171 C60 122 78 187 108 139 C138 91 157 100 179 146 C201 192 214 187 226 119"
+    fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
