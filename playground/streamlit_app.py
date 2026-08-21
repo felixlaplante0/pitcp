@@ -26,6 +26,7 @@ from playground.utils import (
 )
 
 ROOT = Path(__file__).resolve().parent
+LOGO = PROJECT_ROOT / "docs/source/_static/pitcp-ribbon.svg"
 N_TEST = 2500
 
 _METHOD_SELECTOR = components.component(
@@ -162,7 +163,7 @@ def _cached_results(
 
 
 def main():  # noqa: D103
-    st.set_page_config(page_title="PIT-CP playground", page_icon="🎯", layout="wide")
+    st.set_page_config(page_title="PIT-CP playground", page_icon=str(LOGO), layout="wide")
     st.title("PIT-CP playground")
     st.write(
         "Compare all five estimators on the heteroscedastic candy example used in "
