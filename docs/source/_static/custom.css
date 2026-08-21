@@ -80,11 +80,34 @@
   color: white;
   font-weight: 650;
   text-decoration: none;
+  transition: transform 0.15s ease, background-color 0.15s ease,
+    color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hero-actions a:hover {
+  color: white;
+  background: color-mix(in srgb, white 18%, transparent);
+  box-shadow: 0 0.25rem 0.8rem rgb(0 0 0 / 18%);
+  transform: translateY(-1px);
+}
+
+.hero-actions a:active {
+  transform: translateY(0);
+}
+
+.hero-actions a:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 3px;
 }
 
 .hero-actions .primary {
   color: #33265f;
   background: white;
+}
+
+.hero-actions .primary:hover {
+  color: #33265f;
+  background: #f4f1ff;
 }
 
 .feature-card {
