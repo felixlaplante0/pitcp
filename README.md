@@ -15,7 +15,7 @@ Adaptive conformal prediction with pivotal scores and conditional coverage.</p>
 
 <p align="center">
   <a href="https://pypi.org/project/pitcp/"><img src="https://img.shields.io/pypi/v/pitcp?logo=pypi&logoColor=white" alt="PyPI version"></a>
-  <a href="https://pypi.org/project/pitcp/"><img src="https://img.shields.io/pypi/pyversions/pitcp?logo=python&logoColor=white" alt="Supported Python versions"></a>
+  <a href="https://pypi.org/project/pitcp/"><img src="https://img.shields.io/badge/python-3.11--3.14-blue?logo=python&logoColor=white" alt="Supported Python versions: 3.11–3.14"></a>
   <a href="https://github.com/felixlaplante0/pitcp/actions/workflows/lint.yml"><img src="https://github.com/felixlaplante0/pitcp/actions/workflows/lint.yml/badge.svg" alt="Lint status"></a>
   <a href="https://codecov.io/gh/felixlaplante0/pitcp"><img src="https://codecov.io/gh/felixlaplante0/pitcp/graph/badge.svg" alt="Coverage"></a>
   <a href="https://pitcp.readthedocs.io/en/latest/"><img src="https://readthedocs.org/projects/pitcp/badge/?version=latest" alt="Documentation status"></a>
