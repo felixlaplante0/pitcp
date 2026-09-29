@@ -1,11 +1,13 @@
 import argparse
 from collections import defaultdict
+from functools import partial
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import torch
 import zuko
+from _utils import ECDF
 from catboost import CatBoostRegressor
 from pitcp import CONTRA, CQR, HPD, PITCP, SCP
 from pitcp.utils import contra_volume, coverage_gap, cqr_volume, hpd_volume, lp_volume
@@ -31,6 +33,16 @@ def summarize(
         "CovGap": coverage_gap(clusters, covered),
         "Vol": np.exp(np.log(volumes).mean()),
     }
+
+
+def linf_score(
+    y: np.ndarray,
+    y_pred: np.ndarray,
+    y_scaler: StandardScaler,
+    residual_scaler: StandardScaler,
+) -> np.ndarray:
+    residuals = residual_scaler.transform(y_scaler.inverse_transform(y) - y_pred)
+    return np.max(np.abs(residuals), axis=1)
 
 
 def run(
@@ -82,6 +94,9 @@ def run(
     hpd.fit(X_train_val, y_train_val).conformalize(X_cal, y_cal)
     contra = CONTRA(density, optimizer, batch_size=batch_size)
     contra.conformalize(X_cal, y_cal)
+    score = partial(linf_score, y_scaler=y_scaler, residual_scaler=residual_scaler)
+    ecdf = ECDF(hpd.estimator, score, batch_size=batch_size)
+    ecdf.conformalize(X_cal, y_cal, y_pred[half:three_quarters])
 
     # PIT-CP
     density = zuko.flows.SOSPF(features=1, context=n_features, hidden_features=(16, 16))
@@ -99,7 +114,11 @@ def run(
         "HPD": hpd.contains(X_test, y_test, confidence_level=QUANTILES),
         "CONTRA": contra.contains(X_test, y_test, confidence_level=QUANTILES),
         "PIT-CP": pitcp.contains(X_test, scores_test, confidence_level=QUANTILES),
+        "ECDF": ecdf.contains(
+            X_test, y_test, y_pred[three_quarters:], confidence_level=QUANTILES
+        ),
     }
+    radii = ecdf.predict(X_test, y_pred[three_quarters:], confidence_level=QUANTILES)
     volumes = {
         "SCP": lp_volume(
             scp, X_test, n_targets, confidence_level=QUANTILES, ord=np.inf
@@ -109,12 +128,14 @@ def run(
         "PIT-CP": lp_volume(
             pitcp, X_test, n_targets, confidence_level=QUANTILES, ord=np.inf
         ),
+        "ECDF": (2 * radii) ** n_targets,
     }
     scalers = {
         "SCP": residual_scaler,
         "HPD": y_scaler,
         "CONTRA": y_scaler,
         "PIT-CP": residual_scaler,
+        "ECDF": residual_scaler,
     }
     results = {}
     for i, quantile in enumerate(QUANTILES):
