@@ -12,11 +12,11 @@ from zuko.flows import Flow
 from zuko.mixtures import GMM
 
 
-class DHEUR(SCP):
+class CPCP(SCP):
     """Calibrates empirical conditional CDF scores by Monte Carlo sampling.
 
     A fitted conditional ``zuko`` distribution of the targets generates samples whose
-    base scores define an empirical conditional CDF, following the score of Dheur
+    base scores define an empirical conditional CDF, following the C-PCP score of Dheur
     et al. (2025). Observed base scores are mapped to their empirical ranks, which are
     then calibrated by the shared split-conformal threshold.
 
@@ -56,7 +56,7 @@ class DHEUR(SCP):
         n_samples: int = 100,
         batch_size: int | None = None,
     ):
-        """Initializes the DHEUR conformal regressor.
+        """Initializes the C-PCP conformal regressor.
 
         Args:
             estimator (Flow | GMM): Fitted conditional target-density estimator.

@@ -1,4 +1,4 @@
-from ._dheur import DHEUR
+from ._cpcp import CPCP
 from ._synthetic import (
     gen_data,
     inv_score_abs,
@@ -14,7 +14,7 @@ from ._synthetic import (
 )
 
 __all__ = [
-    "DHEUR",
+    "CPCP",
     "gen_data",
     "inv_score_abs",
     "inv_score_hpd",
