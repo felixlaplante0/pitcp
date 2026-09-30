@@ -7,7 +7,7 @@ from sklearn.utils._param_validation import HasMethods, Interval, validate_param
 from sklearn.utils.validation import check_is_fitted, validate_data
 
 from ..utils._quantile import QuantileEstimator
-from ..utils._utils import collapse
+from ..utils.utils import collapse
 from ._scp import SCP
 
 

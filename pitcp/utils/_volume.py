@@ -14,7 +14,7 @@ from sklearn.utils._param_validation import (
 )
 from sklearn.utils.validation import validate_data
 
-from ._utils import collapse
+from .utils import collapse
 
 if TYPE_CHECKING:
     from ..models import CONTRA, CQR, HPD, PITCP, SCP

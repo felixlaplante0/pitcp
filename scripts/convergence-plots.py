@@ -6,7 +6,7 @@ import pandas as pd
 import seaborn as sns
 import torch
 import zuko
-from _utils import gen_data, score_abs, std
+from utils import gen_data, score_abs, std
 from pitcp import PITCP
 from scipy.stats import norm
 

@@ -5,18 +5,18 @@ from typing import ClassVar, Self
 import numpy as np
 import torch
 from pitcp import SCP
-from pitcp.utils._utils import collapse
+from pitcp.utils.utils import collapse
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.validation import check_array, check_is_fitted
 from zuko.flows import Flow
 from zuko.mixtures import GMM
 
 
-class ECDF(SCP):
+class DHEUR(SCP):
     """Calibrates empirical conditional CDF scores by Monte Carlo sampling.
 
     A fitted conditional ``zuko`` distribution of the targets generates samples whose
-    base scores define an empirical conditional CDF, following the ECDF score of Dheur
+    base scores define an empirical conditional CDF, following the score of Dheur
     et al. (2025). Observed base scores are mapped to their empirical ranks, which are
     then calibrated by the shared split-conformal threshold.
 
@@ -56,7 +56,7 @@ class ECDF(SCP):
         n_samples: int = 100,
         batch_size: int | None = None,
     ):
-        """Initializes the ECDF conformal regressor.
+        """Initializes the DHEUR conformal regressor.
 
         Args:
             estimator (Flow | GMM): Fitted conditional target-density estimator.

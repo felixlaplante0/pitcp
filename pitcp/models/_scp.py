@@ -5,7 +5,7 @@ from sklearn.base import BaseEstimator, check_is_fitted
 from sklearn.utils._param_validation import validate_params
 from sklearn.utils.validation import check_array
 
-from ..utils._utils import collapse, confidence_levels
+from ..utils.utils import collapse, confidence_levels
 
 
 class SCP(BaseEstimator):

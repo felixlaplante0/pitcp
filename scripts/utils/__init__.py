@@ -1,6 +1,6 @@
 """Utilities shared by the experiment scripts."""
 
-from ._ecdf import ECDF
+from .dheur import DHEUR
 from ._synthetic import (
     gen_data,
     inv_score_abs,
@@ -16,7 +16,7 @@ from ._synthetic import (
 )
 
 __all__ = [
-    "ECDF",
+    "DHEUR",
     "gen_data",
     "inv_score_abs",
     "inv_score_hpd",

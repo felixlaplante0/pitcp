@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import zuko
-from _utils import (
+from utils import (
     gen_data,
     inv_score_abs,
     inv_score_hpd,
