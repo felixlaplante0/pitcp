@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import torch
 import zuko
-from utils import DHEUR
+from _utils import DHEUR
 from catboost import CatBoostRegressor
 from pitcp import CONTRA, CQR, HPD, PITCP, SCP
 from pitcp.utils import contra_volume, coverage_gap, cqr_volume, hpd_volume, lp_volume

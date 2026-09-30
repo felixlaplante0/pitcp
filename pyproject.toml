@@ -65,7 +65,7 @@ lint.select = [
     "PL",  # Pylint
     "RUF", # Ruff-specific rules
 ]
-lint.ignore = ["D417", "PLR0913"]
+lint.ignore = ["D100", "D104", "D417", "PLR0913"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

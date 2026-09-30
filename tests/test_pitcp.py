@@ -1,5 +1,3 @@
-"""Tests for the pitcp package."""
-
 import numpy as np
 import pytest
 import torch

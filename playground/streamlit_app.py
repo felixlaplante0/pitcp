@@ -1,5 +1,3 @@
-"""Streamlit application comparing every conformal model in pitcp."""
-
 import sys
 from pathlib import Path
 

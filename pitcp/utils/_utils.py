@@ -1,5 +1,3 @@
-"""Shared helpers for confidence levels and output shapes."""
-
 from collections.abc import Sequence
 
 import numpy as np

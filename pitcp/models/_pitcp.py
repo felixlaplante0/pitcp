@@ -16,7 +16,7 @@ from tqdm import trange
 from zuko.flows import Flow  # type: ignore
 from zuko.mixtures import GMM  # type: ignore
 
-from ..utils.utils import collapse
+from ..utils._utils import collapse
 from ._scp import SCP
 
 # Constants

@@ -1,5 +1,3 @@
-"""Tests for conformalized quantile regression."""
-
 import numpy as np
 import pytest
 from catboost import CatBoostRegressor

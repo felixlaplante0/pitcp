@@ -1,5 +1,3 @@
-"""Configures the Sphinx documentation builder."""
-
 project = "pitcp"
 copyright = "2026, Félix Laplante"
 author = "Félix Laplante"

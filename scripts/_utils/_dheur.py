@@ -5,7 +5,7 @@ from typing import ClassVar, Self
 import numpy as np
 import torch
 from pitcp import SCP
-from pitcp.utils.utils import collapse
+from pitcp.utils._utils import collapse
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.validation import check_array, check_is_fitted
 from zuko.flows import Flow

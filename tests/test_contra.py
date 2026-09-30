@@ -1,5 +1,3 @@
-"""Tests for CONTRA conformal prediction."""
-
 import numpy as np
 import pytest
 import torch

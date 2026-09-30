@@ -1,5 +1,3 @@
-"""Conformal prediction estimators."""
-
 from ._contra import CONTRA
 from ._cqr import CQR
 from ._hpd import HPD

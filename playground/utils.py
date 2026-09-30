@@ -1,5 +1,3 @@
-"""Data, model, metric, and plotting helpers for the playground."""
-
 from pathlib import Path
 
 import altair as alt

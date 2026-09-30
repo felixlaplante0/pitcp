@@ -1,6 +1,4 @@
-"""Utilities shared by the experiment scripts."""
-
-from .dheur import DHEUR
+from ._dheur import DHEUR
 from ._synthetic import (
     gen_data,
     inv_score_abs,

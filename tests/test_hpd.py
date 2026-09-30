@@ -1,5 +1,3 @@
-"""Tests for highest-predictive-density conformal prediction."""
-
 import numpy as np
 import pytest
 import torch

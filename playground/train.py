@@ -1,5 +1,3 @@
-"""Regenerates the confidence-independent playground model artifact."""
-
 from pathlib import Path
 
 import numpy as np
