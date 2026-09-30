@@ -27,7 +27,7 @@ class CPCP(SCP):
           n_outputs)`` and predictions with the same shape to scores with shape
           ``(n_samples,)``.
         - ``n_samples``: Positive number of Monte Carlo draws used to estimate each
-          empirical CDF. Defaults to 100.
+          empirical CDF. Defaults to 1000.
         - ``batch_size``: Positive mini-batch size used during sampling. ``None`` uses
           the full dataset. Defaults to ``None``.
 
@@ -53,7 +53,7 @@ class CPCP(SCP):
         estimator: Flow | GMM,
         score: Callable[[np.ndarray, np.ndarray], np.ndarray],
         *,
-        n_samples: int = 100,
+        n_samples: int = 1000,
         batch_size: int | None = None,
     ):
         """Initializes the C-PCP conformal regressor.
@@ -62,7 +62,7 @@ class CPCP(SCP):
             estimator (Flow | GMM): Fitted conditional target-density estimator.
             score (Callable[[np.ndarray, np.ndarray], np.ndarray]): Base nonconformity
                 score.
-            n_samples (int, optional): Monte Carlo sample count. Defaults to 100.
+            n_samples (int, optional): Monte Carlo sample count. Defaults to 1000.
             batch_size (int | None, optional): Sampling batch size. ``None`` uses full
                 batches. Defaults to None.
         """
