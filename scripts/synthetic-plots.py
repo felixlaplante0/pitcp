@@ -32,6 +32,8 @@ plt.rcParams.update(
         "xtick.labelsize": 12,
         "ytick.labelsize": 12,
         "legend.fontsize": 12,
+        "pdf.fonttype": 42,
+        "ps.fonttype": 42,
     }
 )
 
