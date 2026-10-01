@@ -1,4 +1,5 @@
 from ._cpcp import CPCP
+from ._floor import oracle_floor
 from ._synthetic import (
     gen_data,
     inv_score_abs,
@@ -19,6 +20,7 @@ __all__ = [
     "inv_score_abs",
     "inv_score_hpd",
     "inv_score_y",
+    "oracle_floor",
     "oracle_score_abs",
     "oracle_score_hpd",
     "oracle_score_y",

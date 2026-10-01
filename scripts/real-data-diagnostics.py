@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import torch
 import zuko
-from _utils import CPCP
+from _utils import CPCP, oracle_floor
 from catboost import CatBoostRegressor
 from pitcp import CONTRA, CQR, HPD, PITCP, SCP
 from pitcp.utils import contra_volume, coverage_gap, cqr_volume, hpd_volume, lp_volume
@@ -109,6 +109,7 @@ def run(
 
     # Compute coverage and volume
     clusters = KMeans(n_clusters=10, random_state=42).fit_predict(X_test)
+    floors = oracle_floor(clusters, QUANTILES)
     coverages = {
         "SCP": scp.contains(scores_test, confidence_level=QUANTILES),
         "HPD": hpd.contains(X_test, y_test, confidence_level=QUANTILES),
@@ -157,6 +158,13 @@ def run(
             clusters,
             y_scaler,
         )
+
+        # Oracle floor
+        result["Oracle"] = {
+            "Marginal Coverage": np.nan,
+            "CovGap": floors[i],
+            "Vol": np.nan,
+        }
         results[quantile] = pd.DataFrame(result).T
 
     return results
