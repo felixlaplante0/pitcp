@@ -230,9 +230,9 @@ def main():
 
         print(f"\nQuantile: {quantile}")  # noqa: T201
         print(final_frame)  # noqa: T201
-        (ROOT / "figures").mkdir(exist_ok=True)
+        (ROOT / "results").mkdir(exist_ok=True)
         final_frame.to_string(
-            ROOT / "figures" / f"{dataset_name}-quantile-{quantile}.txt"
+            ROOT / "results" / f"{dataset_name}-quantile-{quantile}.txt"
         )
 
 
