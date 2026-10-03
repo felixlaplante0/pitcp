@@ -221,7 +221,7 @@ python run-all.py
 
 The runner uses the active Python interpreter and stops if an experiment fails. It does not run `data/predict.py`; prepare or verify the real-data files separately as described above.
 
-These commands write figures and diagnostic tables to `figures/`. The paper settings are defined as constants near the top of each script.
+These commands write figures to `figures/` and diagnostic tables to `results/`. The paper settings are defined as constants near the top of each script.
 
 ### Script Descriptions
 
